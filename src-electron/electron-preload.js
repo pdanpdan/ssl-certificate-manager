@@ -13,6 +13,22 @@ const initSqlJs = require('sql.js');
 
 const sqlite = {};
 
+const sqliteRes2Rows = (res, mapFn) => {
+  const [{ columns, values }] = res;
+
+  return (values || []).map((value, valueIndex) => {
+    const row = {};
+
+    columns.forEach((column, columnIndex) => {
+      row[column] = value[columnIndex];
+    });
+
+    return typeof mapFn === 'function'
+      ? mapFn({ ...row }, valueIndex)
+      : row;
+  });
+};
+
 contextBridge.exposeInMainWorld('sslCertAPI', {
   openDb() {
     sqlite.basePath = app.getPath('userData');
@@ -84,13 +100,13 @@ contextBridge.exposeInMainWorld('sslCertAPI', {
     }
   },
 
-  readHosts() {
+  readHosts(listAll) {
     if (sqlite.db === undefined) {
       return Promise.reject(new Error('Cannot open db'));
     }
 
-    return new Promise((resolve, reject) => {
-      sqlite.db.all(`
+    try {
+      const res = sqlite.db.exec(`
         SELECT
           h.*,
           hh.ts,
@@ -98,13 +114,17 @@ contextBridge.exposeInMainWorld('sslCertAPI', {
           hh.fingerprint,
           hh.certificates,
           hh.errors,
-          CASE WHEN hh.id IS NOT NULL AND (SELECT hh2.fingerprint FROM hosts_history hh2 WHERE hh2.idHost = hh.idHost AND hh2.id != hh.id ORDER BY ts DESC LIMIT 1) != hh.fingerprint
+          CASE
+            WHEN
+              hh.id IS NOT NULL
+              AND (SELECT hh2.fingerprint FROM hosts_history hh2 WHERE hh2.idHost = hh.idHost AND hh2.id != hh.id ORDER BY ts DESC LIMIT 1) != hh.fingerprint
             THEN 1
             ELSE 0
-          END CASE AS fingerprintChanged
+          END AS fingerprintChanged,
           (SELECT count(*) FROM hosts_history hh2 WHERE hh2.idHost = hh.idHost) AS historyLength
         FROM hosts h
           LEFT JOIN hosts_history hh ON hh.id = h.idHistory
+        ${ listAll === true ? '' : 'WHERE h.active = 1' }
         ORDER BY
           h.active DESC,
           h.category NULLS LAST,
@@ -112,28 +132,26 @@ contextBridge.exposeInMainWorld('sslCertAPI', {
           h.hostname,
           h.port,
           h.servername
-      `, [], (err, rows) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(rows.map((row) => {
-            try {
-              row.certificates = JSON.parse(row.certificates) || [];
-            } catch (e) {
-              row.certificates = [];
-            }
+      `);
 
-            try {
-              row.errors = JSON.parse(row.errors) || [];
-            } catch (e) {
-              row.errors = [];
-            }
-
-            return row;
-          }));
+      return Promise.resolve(sqliteRes2Rows(res, (row) => {
+        try {
+          row.certificates = JSON.parse(row.certificates) || [];
+        } catch (e) {
+          row.certificates = [];
         }
-      });
-    });
+
+        try {
+          row.errors = JSON.parse(row.errors) || [];
+        } catch (e) {
+          row.errors = [];
+        }
+
+        return row;
+      }));
+    } catch (err) {
+      return Promise.reject(err);
+    }
   },
 
   readHostHistory(host) {
@@ -145,38 +163,34 @@ contextBridge.exposeInMainWorld('sslCertAPI', {
       return Promise.reject(new Error('Invalid host definition'));
     }
 
-    return new Promise((resolve, reject) => {
-      sqlite.db.all(`
+    try {
+      const res = sqlite.db.exec(`
         SELECT
           hh.*
         FROM hosts_history hh
         WHERE idHost = ?
         ORDER BY
           hh.ts DESC
-      `, [
-        host.id,
-      ], (err, rows) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(rows.map((row) => {
-            try {
-              row.certificates = JSON.parse(row.certificates) || [];
-            } catch (e) {
-              row.certificates = [];
-            }
+      `, [host.id]);
 
-            try {
-              row.errors = JSON.parse(row.errors) || [];
-            } catch (e) {
-              row.errors = [];
-            }
-
-            return row;
-          }));
+      return Promise.resolve(sqliteRes2Rows(res, (row) => {
+        try {
+          row.certificates = JSON.parse(row.certificates) || [];
+        } catch (e) {
+          row.certificates = [];
         }
-      });
-    });
+
+        try {
+          row.errors = JSON.parse(row.errors) || [];
+        } catch (e) {
+          row.errors = [];
+        }
+
+        return row;
+      }));
+    } catch (err) {
+      return Promise.reject(err);
+    }
   },
 
   writeHost(host) {
@@ -217,17 +231,16 @@ contextBridge.exposeInMainWorld('sslCertAPI', {
             port = COALESCE(?, port),
             description = COALESCE(?, description),
             category = COALESCE(?, category),
-            active = COALESCE(?, active),
-            idHistory = COALESCE(?, idHistory)
+            active = COALESCE(?, active)
           WHERE id=?
         `, [
-          host.hostname,
-          host.servername,
-          host.port,
-          host.description,
-          host.category,
-          host.active ? 1 : 0,
-          host.idHistory,
+          host.hostname === undefined ? null : host.hostname,
+          host.servername === undefined ? null : host.servername,
+          host.port === undefined ? null : host.port,
+          host.description === undefined ? null : host.description,
+          host.category === undefined ? null : host.category,
+          // eslint-disable-next-line no-nested-ternary
+          host.active === undefined ? null : (host.active ? 1 : 0),
           host.id,
         ]);
       }
@@ -253,47 +266,37 @@ contextBridge.exposeInMainWorld('sslCertAPI', {
       return Promise.reject(new Error('Invalid history definition'));
     }
 
-    return new Promise((resolve, reject) => {
-      sqlite.db.get(`
-        INSERT INTO hosts_history (
-          idHost,
-          authorized,
-          fingerprint,
-          certificates,
-          errors
+    try {
+      sqlite.db.run(`
+        UPDATE hosts
+        SET idHistory = (
+          INSERT INTO hosts_history (
+            idHost,
+            authorized,
+            fingerprint,
+            certificates,
+            errors
+          )
+          VALUES (?, ?, ?, ?, ?)
+          RETURNING id
         )
-        VALUES (?, ?, ?, ?, ?)
-        RETURNING id
+        WHERE id = ?
+
       `, [
         host.id,
         host.authorized,
         host.fingerprint,
         JSON.stringify(host.certificates || []),
         JSON.stringify(host.errors || []),
-      ], (err, row) => {
-        if (err) {
-          reject(err);
-        } else {
-          sqlite.db.get(`
-            UPDATE hosts
-            SET idHistory = ?
-            WHERE id = ?
-            RETURNING id
-          `, [
-            row.id,
-            host.id,
-          ], (err2) => {
-            if (err2) {
-              reject(err2);
-            } else {
-              writeFileSync(sqlite.filePath, Buffer.from(sqlite.db.export()));
+        host.id,
+      ]);
 
-              resolve();
-            }
-          });
-        }
-      });
-    });
+      writeFileSync(sqlite.filePath, Buffer.from(sqlite.db.export()));
+
+      return Promise.resolve();
+    } catch (err) {
+      return Promise.reject(err);
+    }
   },
 
   verifyHost(host) {

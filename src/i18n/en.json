@@ -2,5 +2,28 @@
   "error_404": {
     "message": "Sorry, nothing here...",
     "btn_back": "Go back"
+  },
+
+  "validation": {
+    "required": "Field is required"
+  },
+
+  "host": {
+    "title_add": "Add host",
+    "title_delete": "Delete host",
+    "title_update": "Update host",
+    "label_hostname": "Host name",
+    "label_servername": "Server name",
+    "label_port": "Port",
+    "label_description": "Description",
+    "label_category": "Category",
+    "btn_add": "Add host",
+    "btn_delete": "Delete host",
+    "btn_update": "Update host",
+    "btn_cancel": "Cancel",
+    "msg_add": "Host {hostname} added",
+    "msg_add_error": "Error adding host {hostname}: {error}",
+    "msg_update": "Host {hostname} updated",
+    "msg_update_error": "Error updating host {hostname}: {error}"
   }
 }

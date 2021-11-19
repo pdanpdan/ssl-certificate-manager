@@ -1,15 +1,17 @@
 <template>
-  <router-view />
+  <q-layout view="hHh lpR fFf">
+    <q-page-container>
+      <router-view />
+    </q-page-container>
 
-  <div class="fixed-bottom-right q-pa-sm text-grey-8 z-top no-pointer-events">ver. {{ appVersion }}</div>
+    <div class="fixed-bottom-right q-pa-sm text-grey-8 z-top no-pointer-events">ver. {{ appVersion }}</div>
+  </q-layout>
 </template>
 
 <script>
-import { defineComponent } from 'vue';
-
 const appVersion = require('../package.json').version;
 
-export default defineComponent({
+export default {
   name: 'App',
 
   data() {
@@ -33,5 +35,5 @@ export default defineComponent({
         console.error('[sqlite] close:', err);
       });
   },
-});
+};
 </script>

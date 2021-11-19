@@ -1,64 +1,120 @@
 <template>
-  <q-card
-    square
-    flat
-  >
-    <q-card-section class="column no-wrap q-gutter-y-sm">
-      <q-input v-model="hostname" label="hostname" dense />
-      <q-input v-model="servername" label="servername" dense />
-      <q-input v-model="port" label="port" dense />
-      <q-input v-model="description" label="description" dense />
-      <q-input v-model="category" label="category" dense />
-    </q-card-section>
+  <q-item>
+    <q-item-section side>
+      <q-checkbox
+        :model-value="host.selected"
+        dense
+        color="primary"
+        @update:model-value="selectHost"
+      />
+    </q-item-section>
 
-    <q-card-actions align="right">
-      <q-btn color="primary" label="Verify Host" @click="addHost" />
-    </q-card-actions>
-  </q-card>
+    <q-item-section>
+      <q-item-label>
+        <strong v-if="host.category">
+          {{ host.category }} /
+        </strong>
+
+        {{ host.description }}
+      </q-item-label>
+
+      <q-item-label caption>
+        {{ host.hostname }}:{{ host.port }}
+
+        <strong v-if="host.servername && host.servername !== host.hostname">
+          / {{ host.servername }}
+        </strong>
+      </q-item-label>
+
+      <q-item-label caption>
+        {{ host.fingerprint }}
+        {{ host }}
+      </q-item-label>
+    </q-item-section>
+
+    <q-item-section side>
+      <div class="row no-wrap items-center">
+        <q-btn
+          flat
+          dense
+          padding="xs"
+          color="negative"
+          icon="delete"
+          :disable="host.active !== 1"
+          @click="deleteHost"
+        />
+
+        <q-btn
+          flat
+          dense
+          padding="xs"
+          color="primary"
+          icon="edit"
+          @click="editHost"
+        />
+      </div>
+    </q-item-section>
+  </q-item>
 </template>
 
 <script>
-import { defineComponent } from 'vue';
+import HostEditDialog from 'components/HostEditDialog.vue';
 
-export default defineComponent({
-  name: 'HostAddComponent',
+export default {
+  name: 'HostItemComponent',
 
   props: {
-    host: Object,
-  },
-
-  data() {
-    return {
-      hostname: 'revoked.badssl.com',
-      servername: 'revoked.badssl.com',
-      port: 443,
-      description: '',
-      category: '',
-      active: 1,
-    };
-  },
-
-  methods: {
-    addHost() {
-      const host = {
-        id: this.host.id,
-        hostname: this.hostname,
-        servername: this.servername,
-        port: this.port,
-        description: this.description,
-        category: this.category,
-        active: this.active,
-      };
-
-      window.sslCertAPI
-        .writeHost(host)
-        .then(() => {
-          this.$emit('host:add', host);
-        })
-        .catch((error) => {
-          console.error(error);
-        });
+    host: {
+      type: Object,
+      required: true,
     },
   },
-});
+
+  emits: ['update', 'select'],
+
+  methods: {
+    selectHost(status) {
+      this.$emit('select', this.host, status);
+    },
+
+    editHost() {
+      this.$q
+        .dialog({
+          component: HostEditDialog,
+
+          componentProps: {
+            host: this.host,
+          },
+        })
+        .onOk(() => {
+          this.$emit('update');
+        });
+    },
+
+    deleteHost() {
+      this.$q
+        .dialog({
+          title: this.$t('host.title_delete'),
+          ok: {
+            label: this.$t('host.btn_delete'),
+            color: 'negative',
+          },
+          cancel: {
+            label: this.$t('host.btn_cancel'),
+            color: 'secondary',
+            flat: true,
+          },
+          focus: 'cancel',
+        })
+        .onOk(() => window.sslCertAPI
+          .writeHost({
+            id: this.host.id,
+            active: 0,
+          })
+          .then(() => {
+            this.$emit('update');
+          }));
+    },
+  },
+};
 </script>

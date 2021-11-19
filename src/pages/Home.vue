@@ -1,91 +1,116 @@
 <template>
-  <div class="q-layout-padding column no-wrap q-gutter-y-sm">
-    <q-card
-      style="max-width: 400px"
-      square
-      flat
-      bordered
-    >
-      <q-card-section class="column no-wrap q-gutter-y-sm">
-        <q-input v-model="hostname" label="hostname" dense />
-        <q-input v-model="servername" label="servername" dense />
-        <q-input v-model="port" label="port" dense />
-      </q-card-section>
+  <q-page class="column no-wrap" padding :style-fn="pageStyleFn">
+    <q-list class="col column no-wrap">
+      <q-item>
+        <q-item-section>
+        </q-item-section>
 
-      <q-card-actions align="right">
-        <q-btn color="primary" label="Verify Host" @click="verifyHost" />
-      </q-card-actions>
-    </q-card>
+        <q-item-section side>
+          <q-btn
+            dense
+            padding="xs"
+            color="accent"
+            icon="add"
+            @click="addHost"
+          />
+        </q-item-section>
+      </q-item>
 
-    <template v-if="history">
-      <q-banner :class="history.authorized === 1 ? 'bg-positive' : 'bg-negative'" dark>
-        <div class="column no-wrap q-gutter-y-xs">
-          <div class="text-subtitle1">
-            {{ history.authorized === 1 ? 'AUTHORIZED' : 'UNAUTHORIZED' }}
-          </div>
-
-          <div class="text-caption">
-            {{ history.fingerprint }}
-          </div>
-        </div>
-      </q-banner>
-
-      <q-card
-        v-if="history.errors.length > 0"
-        class="text-negative"
-        square
-        flat
-        bordered
-      >
-        <q-card-section v-for="(error, i) in history.errors" :key="i">
-          <pre class="scroll q-ma-none"><samp>{{ error }}</samp></pre>
-        </q-card-section>
-      </q-card>
-
-      <q-card
-        v-if="history.certificates.length > 0"
-        square
-        flat
-        bordered
-      >
-        <q-card-section v-for="(certificate, i) in history.certificates" :key="i">
-          <pre class="scroll q-ma-none"><samp>{{ certificate }}</samp></pre>
-        </q-card-section>
-      </q-card>
-    </template>
-  </div>
+      <div class="col scroll">
+        <host-item
+          v-for="(host, i) in filteredHosts"
+          :key="i"
+          :host="host"
+          @update="readHosts"
+          @select="selectHost"
+        />
+      </div>
+    </q-list>
+  </q-page>
 </template>
 
 <script>
 import { defineComponent } from 'vue';
 
+import HostEditDialog from 'components/HostEditDialog.vue';
+import HostItem from 'components/HostItem.vue';
+
 export default defineComponent({
   name: 'HomePage',
 
+  components: {
+    HostItem,
+  },
+
   data() {
     return {
-      hostname: 'revoked.badssl.com',
-      servername: 'revoked.badssl.com',
-      port: 443,
-      history: null,
+      filters: {
+        category: '',
+        host: '',
+      },
+
+      hosts: [],
     };
   },
 
+  computed: {
+    filteredHosts() {
+      return this.hosts;
+    },
+  },
+
   methods: {
-    verifyHost() {
+    readHosts() {
       window.sslCertAPI
-        .verifyHost({
-          hostname: this.hostname,
-          servername: this.servername,
-          port: this.port,
-        })
-        .then((history) => {
-          this.history = history;
+        .readHosts()
+        .then((hosts) => {
+          this.hosts = hosts.map((host) => ({
+            ...host,
+            selected: (this.hosts.find((h) => h.id === host.id) || {}).selected === true,
+          }));
         })
         .catch((error) => {
           console.error(error);
+
+          this.hosts = [];
         });
     },
+
+    addHost() {
+      this.$q
+        .dialog({
+          component: HostEditDialog,
+
+          componentProps: {
+            host: undefined,
+          },
+        })
+        .onOk(() => {
+          this.readHosts();
+        });
+    },
+
+    selectHost(host, selected) {
+      if (host === Object(host)) {
+        const found = this.hosts.find((h) => h.id === host.id);
+
+        if (found !== undefined) {
+          host.selected = selected === true;
+        }
+      }
+    },
+
+    pageStyleFn(offset, height) {
+      return {
+        height: `${ height - offset }px`,
+      };
+    },
+  },
+
+  mounted() {
+    setTimeout(() => {
+      this.readHosts();
+    }, 1000);
   },
 });
 </script>

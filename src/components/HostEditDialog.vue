@@ -3,20 +3,24 @@
     <div class="q-dialog-plugin">
       <q-form @submit="onOkClick">
         <q-card>
-          <q-card-section class="bg-primary text-white q-py-sm row no-wrap items-center">
-            <div class="col text-subtitle1">
-              {{ titleCard }}
-            </div>
+          <q-card-section class="bg-primary text-white" horizontal>
+            <q-card-section class="col">
+              <div class="text-subtitle1">
+                {{ titleCard }}
+              </div>
+            </q-card-section>
 
-            <q-btn
-              flat
-              dense
-              padding="xs"
-              color="white"
-              icon="close"
-              :disable="processing"
-              @click="onCancelClick"
-            />
+            <q-card-actions>
+              <q-btn
+                flat
+                size="lg"
+                padding="none"
+                color="white"
+                icon="close"
+                :disable="processing"
+                @click="onCancelClick"
+              />
+            </q-card-actions>
           </q-card-section>
 
           <q-card-section class="column no-wrap q-gutter-y-sm q-mt-md">
@@ -34,6 +38,7 @@
               v-model="servername"
               outlined
               :label="$t('host.label_servername')"
+              :readonly="hasHistory"
             />
             <q-input
               v-model="port"
@@ -115,6 +120,10 @@ export default {
       return [
         (val) => (typeof val === 'string' && val.trim().length > 0) || this.$t('validation.required'),
       ];
+    },
+
+    hasHistory() {
+      return this.host === Object(this.host) && this.host.historyLength > 0;
     },
   },
 

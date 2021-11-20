@@ -1,60 +1,98 @@
 <template>
-  <q-item>
-    <q-item-section side>
-      <q-checkbox
-        :model-value="host.selected"
-        dense
-        color="primary"
-        @update:model-value="selectHost"
-      />
-    </q-item-section>
+  <q-card>
+    <q-card-section horizontal>
+      <q-card-actions>
+        <q-checkbox
+          :model-value="host.selected"
+          color="primary"
+          @update:model-value="selectHost"
+        />
+      </q-card-actions>
 
-    <q-item-section>
-      <q-item-label>
-        <strong v-if="host.category">
-          {{ host.category }} /
-        </strong>
+      <q-separator vertical inset />
 
-        {{ host.description }}
-      </q-item-label>
+      <q-card-section class="col">
+        <div class="text-subtitle1">
+          <strong v-if="host.category">
+            {{ host.category }} /
+          </strong>
 
-      <q-item-label caption>
-        {{ host.hostname }}:{{ host.port }}
+          {{ host.description }}
+        </div>
 
-        <strong v-if="host.servername && host.servername !== host.hostname">
-          / {{ host.servername }}
-        </strong>
-      </q-item-label>
+        <div class="text-subtitle2">
+          {{ host.hostname }}:{{ host.port }}
 
-      <q-item-label caption>
-        {{ host.fingerprint }}
-        {{ host }}
-      </q-item-label>
-    </q-item-section>
+          <strong v-if="host.servername && host.servername !== host.hostname">
+            / {{ host.servername }}
+          </strong>
+        </div>
 
-    <q-item-section side>
-      <div class="row no-wrap items-center">
+        <div class="text-body2">
+          {{ host.fingerprint }}
+          {{ host }}
+        </div>
+      </q-card-section>
+
+      <q-separator vertical inset />
+
+      <q-card-section class="col">
+        <div class="text-subtitle1">
+          <strong v-if="host.category">
+            {{ host.category }} /
+          </strong>
+
+          {{ host.description }}
+        </div>
+
+        <div class="text-subtitle2">
+          {{ host.hostname }}:{{ host.port }}
+
+          <strong v-if="host.servername && host.servername !== host.hostname">
+            / {{ host.servername }}
+          </strong>
+        </div>
+
+        <div class="text-body2">
+          {{ host.fingerprint }}
+          {{ host }}
+        </div>
+      </q-card-section>
+
+      <q-separator vertical inset />
+
+      <q-card-actions vertical class="justify-center">
         <q-btn
+          v-if="host.active === 1"
           flat
-          dense
+          size="lg"
           padding="xs"
           color="negative"
-          icon="delete"
-          :disable="host.active !== 1"
-          @click="deleteHost"
+          icon="archive"
+          @click="archiveHost"
+        />
+
+        <q-btn
+          v-else
+          flat
+          size="lg"
+          padding="xs"
+          color="positive"
+          icon="unarchive"
+          @click="unarchiveHost"
         />
 
         <q-btn
           flat
-          dense
+          size="lg"
           padding="xs"
           color="primary"
           icon="edit"
           @click="editHost"
         />
-      </div>
-    </q-item-section>
-  </q-item>
+      </q-card-actions>
+    </q-card-section>
+  </q-card>
 </template>
 
 <script>
@@ -91,12 +129,12 @@ export default {
         });
     },
 
-    deleteHost() {
+    archiveHost() {
       this.$q
         .dialog({
-          title: this.$t('host.title_delete'),
+          title: this.$t('host.title_archive'),
           ok: {
-            label: this.$t('host.btn_delete'),
+            label: this.$t('host.btn_archive'),
             color: 'negative',
           },
           cancel: {
@@ -114,6 +152,17 @@ export default {
           .then(() => {
             this.$emit('update');
           }));
+    },
+
+    unarchiveHost() {
+      window.sslCertAPI
+        .writeHost({
+          id: this.host.id,
+          active: 1,
+        })
+        .then(() => {
+          this.$emit('update');
+        });
     },
   },
 };

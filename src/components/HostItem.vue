@@ -33,7 +33,10 @@
 
       <q-card-section class="col q-gutter-y-sm">
         <div class="row items-center">
+          <q-icon class="q-mr-xs" size="sm" v-bind="authorizedIconProps" />
+
           <div class="col text-subtitle1 text-weight-bold">
+
             {{ host.description }}
           </div>
 
@@ -49,7 +52,7 @@
           </q-badge>
         </div>
 
-        <div>
+        <div class="row items-center justify-between">
           <q-badge
             class="q-py-none"
             color="dark"
@@ -63,23 +66,20 @@
               / {{ host.servername }}
             </strong>
           </q-badge>
-        </div>
 
-        <div v-if="authorizedMarkerProps">
           <q-badge
+            v-if="authorizedTimeColor"
             class="q-py-none"
+            :color="authorizedTimeColor"
             outline
-            v-bind="authorizedMarkerProps.badge"
           >
-            <q-icon class="q-mr-xs" size="20px" v-bind="authorizedMarkerProps.icon" />
+            <q-icon class="q-mr-xs" size="20px" name="schedule" />
 
-            {{ authorizedMarkerProps.badgeLabel }}
-
-            <q-tooltip class="q-py-sm q-px-md text-caption">{{ authorizedMarkerProps.tooltipLabel }}</q-tooltip>
+            {{ host.ts }}
           </q-badge>
         </div>
 
-        <div v-if="host.fingerprint">
+        <div v-if="host.fingerprint" class="row">
           <q-badge
             class="q-py-none"
             :color="host.fingerprintChanged === 1 ? 'warning' : 'dark'"
@@ -91,7 +91,7 @@
           </q-badge>
         </div>
 
-        <div v-if="certificateData">
+        <div v-if="certificateData" class="row">
           <q-badge
             class="q-py-none"
             :color="certificateData.bitsColor"
@@ -234,48 +234,46 @@ export default {
   },
 
   computed: {
-    authorizedMarkerProps() {
+    authorizedIconProps() {
       if (!this.host) {
         return undefined;
       }
 
       if (this.host.authorized === null) {
         return {
-          icon: {
-            name: 'gpp_maybe',
-            color: 'grey-6',
-          },
-          badge: {
-            color: 'grey-6',
-          },
-          badgeLabel: this.$t('certificate.not_checked'),
-          tooltipLabel: this.$t('certificate.not_checked'),
+          name: 'gpp_maybe',
+          color: 'grey-6',
         };
       }
 
       return this.host.authorized === 0
         ? {
-          icon: {
-            name: 'gpp_bad',
-            color: 'negative',
-          },
-          badge: {
-            color: 'negative',
-          },
-          badgeLabel: this.host.ts,
-          tooltipLabel: `${ this.$t('certificate.invalid') } @ ${ this.host.ts }`,
+          name: 'gpp_bad',
+          color: 'negative',
         }
         : {
-          icon: {
-            name: 'gpp_good',
-            color: 'positive',
-          },
-          badge: {
-            color: 'positive',
-          },
-          badgeLabel: this.host.ts,
-          tooltipLabel: `${ this.$t('certificate.valid') } @ ${ this.host.ts }`,
+          name: 'gpp_good',
+          color: 'positive',
         };
+    },
+
+    authorizedTimeColor() {
+      if (!this.host || !this.host.ts || Number.isNaN((new Date(this.host.ts)).valueOf())) {
+        return undefined;
+      }
+
+      const now = Date.now();
+      const ts = (new Date(this.host.ts)).valueOf();
+      const daysOld = (now - ts) / (1000 * 60 * 60 * 24);
+
+      // eslint-disable-next-line no-nested-ternary
+      return daysOld > 30
+        ? 'negative'
+        : (
+          daysOld > 7
+            ? 'warning'
+            : 'positive'
+        );
     },
 
     certificateData() {

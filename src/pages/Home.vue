@@ -2,7 +2,7 @@
   <q-page class="column no-wrap q-gutter-y-sm" padding :style-fn="pageStyleFn">
     <q-card class="q-mx-sm">
       <q-card-section horizontal>
-        <q-card-actions vertical class="justify-around">
+        <q-card-actions vertical class="justify-center">
           <q-btn
             flat
             size="md"
@@ -22,7 +22,11 @@
             :disable="filteredSelectedHosts.length === filteredHosts.length || processing"
             @click="selectAllHosts(true)"
           />
+        </q-card-actions>
 
+        <q-separator vertical inset />
+
+        <q-card-actions vertical class="justify-center">
           <q-btn
             flat
             size="lg"
@@ -37,20 +41,41 @@
         <q-separator vertical inset />
 
         <q-card-section class="col">
-          <q-checkbox
-            v-model="filters.active"
-            color="primary"
-            :label="$t('host.filter_active')"
-          />
+          <div class="row items-center">
+            <q-checkbox
+              v-model="filters.active"
+              color="primary"
+              :label="$t('host.filter_active')"
+            />
 
-          <q-checkbox
-            v-model="filters.authorized"
-            color="primary"
-            :true-value="1"
-            :false-value="0"
-            toggle-indeterminate
-            :label="$t(`host.filter_authorized_${ filters.authorized }`)"
-          />
+            <q-separator class="q-ml-md q-mr-sm" vertical inset />
+
+            <q-checkbox
+              v-model="filters.authorizedValid"
+              color="primary"
+              :label="$t('host.filter_authorized_valid')"
+            />
+
+            <q-checkbox
+              v-model="filters.authorizedInvalid"
+              color="primary"
+              :label="$t('host.filter_authorized_invalid')"
+            />
+
+            <q-checkbox
+              v-model="filters.authorizedNotChecked"
+              color="primary"
+              :label="$t('host.filter_authorized_not_checked')"
+            />
+
+            <q-separator class="q-ml-md q-mr-sm" vertical inset />
+
+            <q-checkbox
+              v-model="filters.authorizedExpire"
+              color="primary"
+              :label="$t('host.filter_authorized_expire')"
+            />
+          </div>
 
           <q-input
             v-model="filters.search"
@@ -64,7 +89,7 @@
 
         <q-separator vertical inset />
 
-        <q-card-actions>
+        <q-card-actions vertical class="justify-center">
           <q-btn
             flat
             size="lg"
@@ -108,7 +133,10 @@ export default defineComponent({
     return {
       filters: {
         active: false,
-        authorized: null,
+        authorizedValid: true,
+        authorizedInvalid: true,
+        authorizedNotChecked: true,
+        authorizedExpire: false,
         search: '',
       },
 
@@ -125,11 +153,34 @@ export default defineComponent({
         ? () => true
         : (h) => h.search.indexOf(needle) > -1;
 
-      const authorizedFn = this.filters.authorized === null
+      const authorizedValues = [];
+      if (this.filters.authorizedValid === true) {
+        authorizedValues.push(1);
+      }
+      if (this.filters.authorizedInvalid === true) {
+        authorizedValues.push(0);
+      }
+      if (this.filters.authorizedNotChecked === true) {
+        authorizedValues.push(null);
+      }
+      const authorizedFn = authorizedValues.length === 3
         ? () => true
-        : (h) => h.authorized === this.filters.authorized;
+        : (h) => authorizedValues.includes(h.authorized);
 
-      return this.hosts.filter(searchFn).filter(authorizedFn);
+      const expireFn = this.filters.authorizedExpire !== true
+        ? () => true
+        : (h) => {
+          if (Array.isArray(h.certificates) !== true || h.certificates.length === 0) {
+            return false;
+          }
+
+          const expireDate = new Date(h.certificates[0].valid_to).valueOf();
+          const now = Date.now();
+
+          return Number.isNaN(expireDate) || (expireDate - now) / (1000 * 60 * 60 * 24) < 45;
+        };
+
+      return this.hosts.filter(searchFn).filter(authorizedFn).filter(expireFn);
     },
 
     filteredSelectedHosts() {

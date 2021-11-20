@@ -18,9 +18,10 @@
     "label_description": "Description",
     "label_category": "Category",
     "filter_active": "Show archived hosts",
-    "filter_authorized_1": "Show valid",
-    "filter_authorized_0": "Show invalid",
-    "filter_authorized_null": "Show valid and invalid",
+    "filter_authorized_valid": "Show valid",
+    "filter_authorized_invalid": "Show invalid",
+    "filter_authorized_not_checked": "Show not checked",
+    "filter_authorized_expire": "Only about to expire",
     "filter_search": "Search by category, description or hostname",
     "btn_add": "Add host",
     "btn_archive": "Archive host",
@@ -30,5 +31,24 @@
     "msg_add_error": "Error adding host {hostname}: {error}",
     "msg_update": "Host {hostname} updated",
     "msg_update_error": "Error updating host {hostname}: {error}"
+  },
+
+  "certificate": {
+    "valid": "Valid",
+    "invalid": "Invalid",
+    "not_checked": "Not checked",
+    "expire_after": "Expires in more than",
+    "expire_today": "Expires today",
+    "expire_not_yet_valid": "Not yet valid",
+    "expire_expired": "Already expired",
+    "expire_years": "{n} years | {n} year | {n} years",
+    "expire_months": "{n} months | {n} month | {n} months",
+    "expire_days": "{n} days | {n} day | {n} days",
+    "valid_from": "Valid from",
+    "valid_to": "Valid to",
+    "subject": "Subject",
+    "subject_alt": "Additional subjects",
+    "issuer": "Issuer",
+    "bits": "{n} bits | {n} bit | {n} bits"
   }
 }

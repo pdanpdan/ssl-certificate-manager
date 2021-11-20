@@ -32,23 +32,37 @@
       <q-separator vertical inset />
 
       <q-card-section class="col q-gutter-y-sm">
-        <div class="text-subtitle1">
+        <div class="row items-center">
+          <div class="col text-subtitle1 text-weight-bold">
+            {{ host.description }}
+          </div>
+
           <q-badge
             v-if="host.category"
-            class="q-py-none q-px-sm text-subtitle1"
+            class="q-py-none"
             color="secondary"
-            :label="host.category"
-          />
+            outline
+          >
+            <q-icon class="q-mr-xs" size="20px" name="tag" />
 
-          {{ host.description }}
+            {{ host.category }}
+          </q-badge>
         </div>
 
-        <div class="text-subtitle2">
-          {{ host.hostname }}:{{ host.port }}
+        <div>
+          <q-badge
+            class="q-py-none"
+            color="dark"
+            outline
+          >
+            <q-icon class="q-mr-xs" size="20px" name="cable" />
 
-          <strong v-if="host.servername && host.servername !== host.hostname">
-            / {{ host.servername }}
-          </strong>
+            {{ host.hostname }}:{{ host.port }}
+
+            <strong v-if="host.servername && host.servername !== host.hostname">
+              / {{ host.servername }}
+            </strong>
+          </q-badge>
         </div>
 
         <div v-if="authorizedMarkerProps">
@@ -57,7 +71,7 @@
             outline
             v-bind="authorizedMarkerProps.badge"
           >
-            <q-icon class="q-mr-sm" size="20px" v-bind="authorizedMarkerProps.icon" />
+            <q-icon class="q-mr-xs" size="20px" v-bind="authorizedMarkerProps.icon" />
 
             {{ authorizedMarkerProps.badgeLabel }}
 
@@ -68,10 +82,10 @@
         <div v-if="host.fingerprint">
           <q-badge
             class="q-py-none"
-            :color="host.fingerprintChanged === 1 ? 'warning' : 'grey-8'"
+            :color="host.fingerprintChanged === 1 ? 'warning' : 'dark'"
             outline
           >
-            <q-icon class="q-mr-sm" size="20px" name="fingerprint" />
+            <q-icon class="q-mr-xs" size="20px" name="fingerprint" />
 
             {{ host.fingerprint }}
           </q-badge>
@@ -83,7 +97,7 @@
             :color="certificateData.bitsColor"
             outline
           >
-            <q-icon class="q-mr-sm" size="20px" name="straighten" />
+            <q-icon class="q-mr-xs" size="20px" name="straighten" />
 
             {{ $tc('certificate.bits', certificateData.bits) }}
           </q-badge>

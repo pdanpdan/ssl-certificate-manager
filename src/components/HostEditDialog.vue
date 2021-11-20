@@ -191,7 +191,10 @@ export default {
     },
 
     onHostnameChange(value) {
-      if (typeof this.servername !== 'string' || this.servername.trim().length === 0 || this.servername === this.hostname) {
+      if (
+        this.hasHistory !== true
+        && (typeof this.servername !== 'string' || this.servername.trim().length === 0 || this.servername === this.hostname)
+      ) {
         this.servername = value;
       }
 

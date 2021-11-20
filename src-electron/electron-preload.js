@@ -331,6 +331,8 @@ contextBridge.exposeInMainWorld('sslCertAPI', {
         // This should return an <Error> if verification fails
         // The method should return undefined if the servername and cert are verified
         // checkServerIdentity: (servername, cert) => {},
+
+        sessionTimeout: 3,
       };
 
       const history = {
@@ -398,7 +400,9 @@ contextBridge.exposeInMainWorld('sslCertAPI', {
           code: String(error),
         });
 
-        tlsSocket.end();
+        tlsSocket.destroy();
+
+        resolve(history);
       });
 
       tlsSocket.on('end', () => {

@@ -122,12 +122,12 @@ export default defineComponent({
     filteredHosts() {
       const needle = typeof this.filters.search !== 'string' ? '' : this.filters.search.toLocaleLowerCase();
       const searchFn = typeof this.filters.search !== 'string' || this.filters.search.trim().length === 0
-        ? (h) => h
+        ? () => true
         : (h) => h.search.indexOf(needle) > -1;
 
       const authorizedFn = this.filters.authorized === null
-        ? (h) => h
-        : (h) => h.authorized > this.filters.authorized;
+        ? () => true
+        : (h) => h.authorized === this.filters.authorized;
 
       return this.hosts.filter(searchFn).filter(authorizedFn);
     },

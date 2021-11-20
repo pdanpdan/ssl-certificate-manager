@@ -32,25 +32,23 @@
       <q-separator vertical inset />
 
       <q-card-section class="col q-gutter-y-sm">
-        <div class="row no-wrap items-center">
-          <div class="text-subtitle1">
-            <q-badge
-              v-if="host.category"
-              class="q-py-none q-px-sm text-subtitle1"
-              color="secondary"
-              :label="host.category"
-            />
+        <div class="text-subtitle1">
+          <q-badge
+            v-if="host.category"
+            class="q-py-none q-px-sm text-subtitle1"
+            color="secondary"
+            :label="host.category"
+          />
 
-            {{ host.description }}
-          </div>
+          {{ host.description }}
+        </div>
 
-          <div class="text-subtitle2">
-            {{ host.hostname }}:{{ host.port }}
+        <div class="text-subtitle2">
+          {{ host.hostname }}:{{ host.port }}
 
-            <strong v-if="host.servername && host.servername !== host.hostname">
-              / {{ host.servername }}
-            </strong>
-          </div>
+          <strong v-if="host.servername && host.servername !== host.hostname">
+            / {{ host.servername }}
+          </strong>
         </div>
 
         <div v-if="authorizedMarkerProps">

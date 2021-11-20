@@ -53,41 +53,41 @@
           </div>
         </div>
 
-        <div v-if="authorizedMarkerProps || certificateData" class="row items-center justify-between">
+        <div v-if="authorizedMarkerProps">
           <q-badge
-            v-if="authorizedMarkerProps"
+            class="q-py-none"
             outline
             v-bind="authorizedMarkerProps.badge"
           >
-            <q-icon size="20px" v-bind="authorizedMarkerProps.icon" />
+            <q-icon class="q-mr-sm" size="20px" v-bind="authorizedMarkerProps.icon" />
 
             {{ authorizedMarkerProps.badgeLabel }}
 
             <q-tooltip class="q-py-sm q-px-md text-caption">{{ authorizedMarkerProps.tooltipLabel }}</q-tooltip>
           </q-badge>
-
-          <q-space v-else />
-
-          <q-badge
-            v-if="certificateData"
-            :color="certificateData.bitsColor"
-            outline
-          >
-            <q-icon size="20px" name="straighten" />
-
-            {{ $tc('certificate.bits', certificateData.bits) }}
-          </q-badge>
         </div>
 
-        <div>
+        <div v-if="host.fingerprint">
           <q-badge
-            v-if="host.fingerprint"
+            class="q-py-none"
             :color="host.fingerprintChanged === 1 ? 'warning' : 'grey-8'"
             outline
           >
-            <q-icon size="20px" name="fingerprint" />
+            <q-icon class="q-mr-sm" size="20px" name="fingerprint" />
 
             {{ host.fingerprint }}
+          </q-badge>
+        </div>
+
+        <div v-if="certificateData">
+          <q-badge
+            class="q-py-none"
+            :color="certificateData.bitsColor"
+            outline
+          >
+            <q-icon class="q-mr-sm" size="20px" name="straighten" />
+
+            {{ $tc('certificate.bits', certificateData.bits) }}
           </q-badge>
         </div>
       </q-card-section>

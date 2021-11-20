@@ -9,6 +9,7 @@
             padding="sm"
             color="primary"
             icon="check_box_outline_blank"
+            :disable="filteredSelectedHosts.length === 0 || processing"
             @click="selectAllHosts(false)"
           />
 
@@ -18,7 +19,18 @@
             padding="sm"
             color="primary"
             icon="check_box"
+            :disable="filteredSelectedHosts.length === filteredHosts.length || processing"
             @click="selectAllHosts(true)"
+          />
+
+          <q-btn
+            flat
+            size="lg"
+            padding="xs"
+            color="accent"
+            icon="policy"
+            :disable="filteredSelectedHosts.length === 0 || processing"
+            @click="verifySelectedHosts"
           />
         </q-card-actions>
 
@@ -71,6 +83,7 @@
         :key="i"
         class="q-ma-sm"
         :host="host"
+        :locked="processing && filteredSelectedHosts.includes(host)"
         @update="readHosts"
         @select="selectHost"
       />
@@ -99,6 +112,8 @@ export default defineComponent({
         search: '',
       },
 
+      processing: false,
+
       hosts: [],
     };
   },
@@ -115,6 +130,10 @@ export default defineComponent({
         : (h) => h.authorized > this.filters.authorized;
 
       return this.hosts.filter(searchFn).filter(authorizedFn);
+    },
+
+    filteredSelectedHosts() {
+      return this.filteredHosts.filter((h) => h.selected);
     },
   },
 
@@ -178,6 +197,28 @@ export default defineComponent({
     selectAllHosts(selected) {
       this.filteredHosts.forEach((h) => {
         h.selected = selected === true;
+      });
+    },
+
+    verifySelectedHosts() {
+      this.processing = true;
+
+      const hosts = this.filteredSelectedHosts.map((h) => JSON.parse(JSON.stringify(h)));
+
+      const queue = hosts.reduce(
+        (acc, host) => acc.then(
+          () => window.sslCertAPI
+            .verifyHost(host)
+            .then((history) => window.sslCertAPI.writeHostHistory(host, history))
+            .catch(() => {}),
+        ),
+        Promise.resolve(),
+      );
+
+      return queue.then(() => {
+        this.readHosts();
+
+        this.processing = false;
       });
     },
 

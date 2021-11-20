@@ -267,29 +267,38 @@ contextBridge.exposeInMainWorld('sslCertAPI', {
     }
 
     try {
-      sqlite.db.run(`
-        UPDATE hosts
-        SET idHistory = (
-          INSERT INTO hosts_history (
-            idHost,
-            authorized,
-            fingerprint,
-            certificates,
-            errors
-          )
-          VALUES (?, ?, ?, ?, ?)
-          RETURNING id
+      const res = sqlite.db.exec(`
+        INSERT INTO hosts_history (
+          idHost,
+          authorized,
+          fingerprint,
+          certificates,
+          errors
         )
-        WHERE id = ?
+        VALUES (?, ?, ?, ?, ?)
+        RETURNING id
 
       `, [
-        host.id,
-        host.authorized,
-        host.fingerprint,
-        JSON.stringify(host.certificates || []),
-        JSON.stringify(host.errors || []),
-        host.id,
+        history.idHost || host.id,
+        history.authorized,
+        history.fingerprint,
+        JSON.stringify(history.certificates || []),
+        JSON.stringify(history.errors || []),
       ]);
+
+      const rows = sqliteRes2Rows(res);
+
+      if (rows.length > 0 && rows[0].id) {
+        sqlite.db.run(`
+          UPDATE hosts
+          SET idHistory = ?
+          WHERE id = ?
+
+        `, [
+          rows[0].id,
+          history.idHost || host.id,
+        ]);
+      }
 
       writeFileSync(sqlite.filePath, Buffer.from(sqlite.db.export()));
 

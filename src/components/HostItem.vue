@@ -1,11 +1,22 @@
 <template>
   <q-card>
     <q-card-section horizontal>
-      <q-card-actions>
+      <q-card-actions vertical class="justify-center">
         <q-checkbox
           :model-value="host.selected"
           color="primary"
+          :disable="processing || locked"
           @update:model-value="selectHost"
+        />
+
+        <q-btn
+          flat
+          size="lg"
+          padding="xs"
+          color="accent"
+          icon="policy"
+          :loading="processing || locked"
+          @click="verifyHost"
         />
       </q-card-actions>
 
@@ -69,6 +80,7 @@
           padding="xs"
           color="negative"
           icon="archive"
+          :disable="processing || locked"
           @click="archiveHost"
         />
 
@@ -79,6 +91,7 @@
           padding="xs"
           color="positive"
           icon="unarchive"
+          :disable="processing || locked"
           @click="unarchiveHost"
         />
 
@@ -88,6 +101,7 @@
           padding="xs"
           color="primary"
           icon="edit"
+          :disable="processing || locked"
           @click="editHost"
         />
       </q-card-actions>
@@ -106,9 +120,17 @@ export default {
       type: Object,
       required: true,
     },
+
+    locked: Boolean,
   },
 
   emits: ['update', 'select'],
+
+  data() {
+    return {
+      processing: false,
+    };
+  },
 
   methods: {
     selectHost(status) {
@@ -162,6 +184,24 @@ export default {
         })
         .then(() => {
           this.$emit('update');
+        });
+    },
+
+    verifyHost() {
+      this.processing = true;
+
+      const hostClone = JSON.parse(JSON.stringify(this.host));
+
+      window.sslCertAPI
+        .verifyHost(hostClone)
+        .then((history) => window.sslCertAPI.writeHostHistory(hostClone, history))
+        .then(() => {
+          this.$emit('update');
+
+          this.processing = false;
+        })
+        .catch(() => {
+          this.processing = false;
         });
     },
   },

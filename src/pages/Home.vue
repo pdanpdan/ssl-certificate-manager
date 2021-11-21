@@ -1,6 +1,6 @@
 <template>
-  <q-page class="column no-wrap q-gutter-y-sm" padding :style-fn="pageStyleFn">
-    <q-card class="q-mx-sm">
+  <q-page class="column no-wrap" padding :style-fn="pageStyleFn">
+    <q-card class="q-mx-sm shadow-10">
       <q-card-section horizontal>
         <q-card-actions class="justify-center" vertical>
           <q-btn
@@ -104,11 +104,11 @@
       </q-card-section>
     </q-card>
 
-    <q-scroll-area class="col">
+    <q-scroll-area class="col q-mt-md">
       <host-item
         v-for="(host, i) in filteredHosts"
         :key="i"
-        class="q-ma-sm"
+        class="q-mx-sm q-my-md"
         :host="host"
         :locked="processing && filteredSelectedHosts.includes(host)"
       />

@@ -1,5 +1,5 @@
 <template>
-  <q-card>
+  <q-card class="shadow-4">
     <q-card-section horizontal>
       <q-card-actions vertical>
         <q-checkbox

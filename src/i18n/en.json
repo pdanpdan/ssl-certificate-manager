@@ -1,54 +1,52 @@
 {
+  "certificate": {
+    "bits": "{n} bits | {n} bit | {n} bits",
+    "details": "Details",
+    "expire_after": "Expires in more than",
+    "expire_days": "{n} days | {n} day | {n} days",
+    "expire_expired": "Already expired",
+    "expire_months": "{n} months | {n} month | {n} months",
+    "expire_not_yet_valid": "Not yet valid",
+    "expire_today": "Expires today",
+    "expire_years": "{n} years | {n} year | {n} years",
+    "invalid": "Invalid",
+    "issuer": "Issuer",
+    "not_checked": "Not checked",
+    "subject": "Subject",
+    "subject_alt": "Additional subjects",
+    "valid": "Valid",
+    "valid_from": "Valid from",
+    "valid_to": "Valid to"
+  },
   "error_404": {
-    "message": "Sorry, nothing here...",
-    "btn_back": "Go back"
+    "btn_back": "Go back",
+    "message": "Sorry, nothing here..."
   },
-
-  "validation": {
-    "required": "Field is required"
-  },
-
   "host": {
-    "title_add": "Add host",
-    "title_archive": "Archive host",
-    "title_update": "Update host",
-    "label_hostname": "Host name",
-    "label_servername": "Server name",
-    "label_port": "Port",
-    "label_description": "Description",
-    "label_category": "Category",
-    "filter_active": "Show archived hosts",
-    "filter_authorized_valid": "Show valid",
-    "filter_authorized_invalid": "Show invalid",
-    "filter_authorized_not_checked": "Show not checked",
-    "filter_authorized_expire": "Only about to expire",
-    "filter_search": "Search by category, description or hostname",
     "btn_add": "Add host",
     "btn_archive": "Archive host",
-    "btn_update": "Update host",
     "btn_cancel": "Cancel",
+    "btn_update": "Update host",
+    "filter_active": "Show archived hosts",
+    "filter_authorized_expire": "Only expired or about to expire",
+    "filter_authorized_invalid": "Show invalid",
+    "filter_authorized_not_checked": "Show not checked",
+    "filter_authorized_valid": "Show valid",
+    "filter_search": "Search by category, description or hostname",
+    "label_category": "Category",
+    "label_description": "Description",
+    "label_hostname": "Host name",
+    "label_port": "Port",
+    "label_servername": "Server name",
     "msg_add": "Host {hostname} added",
     "msg_add_error": "Error adding host {hostname}: {error}",
     "msg_update": "Host {hostname} updated",
-    "msg_update_error": "Error updating host {hostname}: {error}"
+    "msg_update_error": "Error updating host {hostname}: {error}",
+    "title_add": "Add host",
+    "title_archive": "Archive host",
+    "title_update": "Update host"
   },
-
-  "certificate": {
-    "valid": "Valid",
-    "invalid": "Invalid",
-    "not_checked": "Not checked",
-    "expire_after": "Expires in more than",
-    "expire_today": "Expires today",
-    "expire_not_yet_valid": "Not yet valid",
-    "expire_expired": "Already expired",
-    "expire_years": "{n} years | {n} year | {n} years",
-    "expire_months": "{n} months | {n} month | {n} months",
-    "expire_days": "{n} days | {n} day | {n} days",
-    "valid_from": "Valid from",
-    "valid_to": "Valid to",
-    "subject": "Subject",
-    "subject_alt": "Additional subjects",
-    "issuer": "Issuer",
-    "bits": "{n} bits | {n} bit | {n} bits"
+  "validation": {
+    "required": "Field is required"
   }
 }

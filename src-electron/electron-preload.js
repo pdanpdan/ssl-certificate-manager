@@ -29,6 +29,22 @@ const sqliteRes2Rows = (res, mapFn) => {
   });
 };
 
+const parseErrorsAndCertificates = (row) => {
+  try {
+    row.certificates = JSON.parse(row.certificates) || [];
+  } catch (e) {
+    row.certificates = [];
+  }
+
+  try {
+    row.errors = JSON.parse(row.errors) || [];
+  } catch (e) {
+    row.errors = [];
+  }
+
+  return row;
+};
+
 contextBridge.exposeInMainWorld('sslCertAPI', {
   openDb() {
     sqlite.basePath = app.getPath('userData');
@@ -117,7 +133,15 @@ contextBridge.exposeInMainWorld('sslCertAPI', {
           CASE
             WHEN
               hh.id IS NOT NULL
-              AND (SELECT hh2.fingerprint FROM hosts_history hh2 WHERE hh2.idHost = hh.idHost AND hh2.id != hh.id ORDER BY ts DESC LIMIT 1) != hh.fingerprint
+              AND coalesce((
+                SELECT hh2.fingerprint
+                FROM hosts_history hh2
+                WHERE hh2.idHost = hh.idHost
+                  AND hh2.ts < hh.ts
+                  AND hh2.fingerprint IS NOT NULL
+                ORDER BY ts DESC
+                LIMIT 1
+              ), hh.fingerprint) != hh.fingerprint
             THEN 1
             ELSE 0
           END AS fingerprintChanged,
@@ -134,21 +158,7 @@ contextBridge.exposeInMainWorld('sslCertAPI', {
           h.servername
       `);
 
-      return Promise.resolve(sqliteRes2Rows(res, (row) => {
-        try {
-          row.certificates = JSON.parse(row.certificates) || [];
-        } catch (e) {
-          row.certificates = [];
-        }
-
-        try {
-          row.errors = JSON.parse(row.errors) || [];
-        } catch (e) {
-          row.errors = [];
-        }
-
-        return row;
-      }));
+      return Promise.resolve(sqliteRes2Rows(res, parseErrorsAndCertificates));
     } catch (err) {
       return Promise.reject(err);
     }
@@ -166,28 +176,28 @@ contextBridge.exposeInMainWorld('sslCertAPI', {
     try {
       const res = sqlite.db.exec(`
         SELECT
-          hh.*
+          hh.*,
+          CASE
+            WHEN
+              coalesce((
+                SELECT hh2.fingerprint
+                FROM hosts_history hh2
+                WHERE hh2.idHost = hh.idHost
+                  AND hh2.ts < hh.ts
+                  AND hh2.fingerprint IS NOT NULL
+                ORDER BY ts DESC
+                LIMIT 1
+              ), hh.fingerprint) != hh.fingerprint
+            THEN 1
+            ELSE 0
+          END AS fingerprintChanged,
         FROM hosts_history hh
         WHERE idHost = ?
         ORDER BY
           hh.ts DESC
       `, [host.id]);
 
-      return Promise.resolve(sqliteRes2Rows(res, (row) => {
-        try {
-          row.certificates = JSON.parse(row.certificates) || [];
-        } catch (e) {
-          row.certificates = [];
-        }
-
-        try {
-          row.errors = JSON.parse(row.errors) || [];
-        } catch (e) {
-          row.errors = [];
-        }
-
-        return row;
-      }));
+      return Promise.resolve(sqliteRes2Rows(res, parseErrorsAndCertificates));
     } catch (err) {
       return Promise.reject(err);
     }

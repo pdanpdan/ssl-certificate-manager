@@ -2,7 +2,7 @@
   <q-page class="column no-wrap q-gutter-y-sm" padding :style-fn="pageStyleFn">
     <q-card class="q-mx-sm">
       <q-card-section horizontal>
-        <q-card-actions vertical class="justify-center">
+        <q-card-actions class="justify-center" vertical>
           <q-btn
             flat
             size="md"
@@ -10,8 +10,10 @@
             color="primary"
             icon="check_box_outline_blank"
             :disable="filteredSelectedHosts.length === 0 || processing"
-            @click="selectAllHosts(false)"
+            @click="selectFilteredHosts(false)"
           />
+
+          <q-separator spaced />
 
           <q-btn
             flat
@@ -19,14 +21,14 @@
             padding="sm"
             color="primary"
             icon="check_box"
-            :disable="filteredSelectedHosts.length === filteredHosts.length || processing"
-            @click="selectAllHosts(true)"
+            :disable="filteredSelectedHosts.length === filteredSelectableHosts.length || processing"
+            @click="selectFilteredHosts(true)"
           />
         </q-card-actions>
 
         <q-separator vertical inset />
 
-        <q-card-actions vertical class="justify-center">
+        <q-card-actions class="justify-center" vertical>
           <q-btn
             flat
             size="lg"
@@ -89,7 +91,7 @@
 
         <q-separator vertical inset />
 
-        <q-card-actions vertical class="justify-center">
+        <q-card-actions class="justify-center" vertical>
           <q-btn
             flat
             size="lg"
@@ -109,8 +111,6 @@
         class="q-ma-sm"
         :host="host"
         :locked="processing && filteredSelectedHosts.includes(host)"
-        @update="readHosts"
-        @select="selectHost"
       />
     </q-scroll-area>
   </q-page>
@@ -118,6 +118,7 @@
 
 <script>
 import { defineComponent } from 'vue';
+import { mapState, mapActions, mapGetters } from 'vuex';
 
 import HostEditDialog from 'components/HostEditDialog.vue';
 import HostItem from 'components/HostItem.vue';
@@ -131,60 +132,36 @@ export default defineComponent({
 
   data() {
     return {
-      filters: {
-        active: false,
-        authorizedValid: true,
-        authorizedInvalid: true,
-        authorizedNotChecked: true,
-        authorizedExpire: false,
-        search: '',
-      },
-
       processing: false,
-
-      hosts: [],
     };
   },
 
   computed: {
-    filteredHosts() {
-      const needle = typeof this.filters.search !== 'string' ? '' : this.filters.search.toLocaleLowerCase();
-      const searchFn = typeof this.filters.search !== 'string' || this.filters.search.trim().length === 0
-        ? () => true
-        : (h) => h.search.indexOf(needle) > -1;
+    ...mapState('hosts', [
+      'hosts',
+    ]),
 
-      const authorizedValues = [];
-      if (this.filters.authorizedValid === true) {
-        authorizedValues.push(1);
-      }
-      if (this.filters.authorizedInvalid === true) {
-        authorizedValues.push(0);
-      }
-      if (this.filters.authorizedNotChecked === true) {
-        authorizedValues.push(null);
-      }
-      const authorizedFn = authorizedValues.length === 3
-        ? () => true
-        : (h) => authorizedValues.includes(h.authorized);
+    ...mapGetters('hosts', [
+      'filteredHosts',
+      'filteredSelectableHosts',
+      'filteredSelectedHosts',
+    ]),
 
-      const expireFn = this.filters.authorizedExpire !== true
-        ? () => true
-        : (h) => {
-          if (Array.isArray(h.certificates) !== true || h.certificates.length === 0) {
-            return false;
-          }
+    filters() {
+      const { filters } = this.$store.state.hosts;
 
-          const expireDate = new Date(h.certificates[0].valid_to).valueOf();
-          const now = Date.now();
+      return Object.keys(filters)
+        .reduce((acc, key) => {
+          Object.defineProperty(acc, key, {
+            get: () => filters[key],
+            set: (value) => {
+              this.setFilters({ [key]: value });
+            },
+            enumerable: true,
+          });
 
-          return Number.isNaN(expireDate) || (expireDate - now) / (1000 * 60 * 60 * 24) < 45;
-        };
-
-      return this.hosts.filter(searchFn).filter(authorizedFn).filter(expireFn);
-    },
-
-    filteredSelectedHosts() {
-      return this.filteredHosts.filter((h) => h.selected);
+          return acc;
+        }, {});
     },
   },
 
@@ -196,30 +173,11 @@ export default defineComponent({
   },
 
   methods: {
-    readHosts() {
-      const searchKeys = [
-        'hostname',
-        'servername',
-        'port',
-        'description',
-        'category',
-      ];
-
-      window.sslCertAPI
-        .readHosts(this.filters.active)
-        .then((hosts) => {
-          this.hosts = hosts.map((host) => ({
-            ...host,
-            selected: (this.hosts.find((h) => h.id === host.id) || {}).selected === true,
-            search: searchKeys.map((k) => host[k]).join('#').toLocaleLowerCase(),
-          }));
-        })
-        .catch((error) => {
-          console.error(error);
-
-          this.hosts = [];
-        });
-    },
+    ...mapActions('hosts', [
+      'readHosts',
+      'selectFilteredHosts',
+      'setFilters',
+    ]),
 
     addHost() {
       this.$q
@@ -235,42 +193,25 @@ export default defineComponent({
         });
     },
 
-    selectHost(host, selected) {
-      if (host === Object(host)) {
-        const found = this.hosts.find((h) => h.id === host.id);
-
-        if (found !== undefined) {
-          host.selected = selected === true;
-        }
-      }
-    },
-
-    selectAllHosts(selected) {
-      this.filteredHosts.forEach((h) => {
-        h.selected = selected === true;
-      });
-    },
-
     verifySelectedHosts() {
       this.processing = true;
 
       const hosts = this.filteredSelectedHosts.map((h) => JSON.parse(JSON.stringify(h)));
 
-      const queue = hosts.reduce(
-        (acc, host) => acc.then(
-          () => window.sslCertAPI
-            .verifyHost(host)
-            .then((history) => window.sslCertAPI.writeHostHistory(host, history))
-            .catch(() => {}),
-        ),
-        Promise.resolve(),
-      );
+      return hosts
+        .reduce(
+          (acc, host) => acc.then(
+            () => window.sslCertAPI
+              .verifyHost(host)
+              .then((history) => window.sslCertAPI.writeHostHistory(host, history))
+              .catch(() => {}),
+          ),
+          Promise.resolve(),
+        ).then(() => {
+          this.readHosts();
 
-      return queue.then(() => {
-        this.readHosts();
-
-        this.processing = false;
-      });
+          this.processing = false;
+        });
     },
 
     pageStyleFn(offset, height) {

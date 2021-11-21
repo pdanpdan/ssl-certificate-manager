@@ -196,9 +196,9 @@ export default defineComponent({
     verifySelectedHosts() {
       this.processing = true;
 
-      const hosts = this.filteredSelectedHosts.map((h) => JSON.parse(JSON.stringify(h)));
+      const hostsClones = this.filteredSelectedHosts.map((h) => JSON.parse(JSON.stringify(h)));
 
-      return hosts
+      return hostsClones
         .reduce(
           (acc, host) => acc.then(
             () => window.sslCertAPI

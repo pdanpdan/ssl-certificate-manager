@@ -2,6 +2,8 @@ import { contextBridge } from 'electron';
 import { app } from '@electron/remote';
 import * as tls from 'tls';
 
+import isDeepEqual from '../src/utils/isDeepEqual.js';
+
 const {
   resolve: pathResolve,
 } = require('path');
@@ -44,6 +46,13 @@ const parseErrorsAndCertificates = (row) => {
 
   return row;
 };
+
+const certificateChangedKeys = [
+  'authorized',
+  'fingerprint',
+  'certificates',
+  'errors',
+];
 
 contextBridge.exposeInMainWorld('sslCertAPI', {
   openDb() {
@@ -276,37 +285,47 @@ contextBridge.exposeInMainWorld('sslCertAPI', {
       return Promise.reject(new Error('Invalid history definition'));
     }
 
+    const changed = certificateChangedKeys.reduce((acc, key) => acc || isDeepEqual(host[key], history[key]) !== true, !host.idHistory);
+
     try {
-      const res = sqlite.db.exec(`
-        INSERT INTO hosts_history (
-          idHost,
-          authorized,
-          fingerprint,
-          certificates,
-          errors
-        )
-        VALUES (?, ?, ?, ?, ?)
-        RETURNING id
-
-      `, [
-        history.idHost || host.id,
-        history.authorized,
-        history.fingerprint,
-        JSON.stringify(history.certificates || []),
-        JSON.stringify(history.errors || []),
-      ]);
-
-      const rows = sqliteRes2Rows(res);
-
-      if (rows.length > 0 && rows[0].id) {
-        sqlite.db.run(`
-          UPDATE hosts
-          SET idHistory = ?
-          WHERE id = ?
-
+      if (changed === true) {
+        const res = sqlite.db.exec(`
+          INSERT INTO hosts_history (
+            idHost,
+            authorized,
+            fingerprint,
+            certificates,
+            errors
+          )
+          VALUES (?, ?, ?, ?, ?)
+          RETURNING id
         `, [
-          rows[0].id,
-          history.idHost || host.id,
+          host.id,
+          history.authorized,
+          history.fingerprint,
+          JSON.stringify(history.certificates || []),
+          JSON.stringify(history.errors || []),
+        ]);
+
+        const rows = sqliteRes2Rows(res);
+
+        if (rows.length > 0 && rows[0].id) {
+          sqlite.db.run(`
+            UPDATE hosts
+            SET idHistory = ?
+            WHERE id = ?
+          `, [
+            rows[0].id,
+            host.id,
+          ]);
+        }
+      } else {
+        sqlite.db.run(`
+          UPDATE hosts_history
+          SET ts = CURRENT_TIMESTAMP
+          WHERE id = ?
+        `, [
+          host.idHistory,
         ]);
       }
 

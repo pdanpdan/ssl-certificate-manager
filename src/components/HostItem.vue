@@ -1,7 +1,7 @@
 <template>
   <q-card>
     <q-card-section horizontal>
-      <q-card-actions class="justify-center" vertical>
+      <q-card-actions vertical>
         <q-checkbox
           v-if="host.active === 1"
           :model-value="host.selected"
@@ -13,7 +13,7 @@
 
       <q-separator vertical inset />
 
-      <q-card-actions class="justify-center" vertical>
+      <q-card-actions vertical>
         <q-btn
           flat
           size="lg"
@@ -52,8 +52,6 @@
 
       <q-card-section class="col q-gutter-y-sm">
         <div class="row items-center q-gutter-x-sm">
-          <q-icon size="md" v-bind="authorizedIconProps" />
-
           <div class="text-subtitle1 text-weight-bold">
             {{ host.description }}
           </div>
@@ -72,17 +70,6 @@
           <q-space />
 
           <q-badge
-            v-if="authorizedTimeBadgeProps"
-            class="q-py-none"
-            outline
-            v-bind="authorizedTimeBadgeProps"
-          >
-            <q-icon class="q-mr-xs" size="20px" name="schedule" />
-
-            {{ host.ts }}
-          </q-badge>
-
-          <q-badge
             class="q-py-none"
             color="dark"
             outline
@@ -97,34 +84,43 @@
           </q-badge>
         </div>
 
-        <template v-if="host.ts">
-          <q-separator spaced />
+        <div class="q-mt-none row no-wrap items-center">
+          <q-separator class="col q-my-lg bg-grey-3" />
 
-          <history-item :history="host" />
-        </template>
+          <q-chip
+            square
+            size="md"
+            color="grey-3"
+          >
+            <q-avatar
+              font-size="24px"
+              text-color="white"
+              v-bind="authorizedIconProps"
+            />
+
+            <div class="q-pl-sm" :class="authorizedTimeColor">
+              {{ host.ts || 'N/A' }}
+            </div>
+          </q-chip>
+
+          <q-separator class="col q-my-lg bg-grey-3" />
+        </div>
+
+        <history-item v-if="host.ts" :history="host" />
 
         <template v-if="showHistory && history.length > 0">
-          <template v-for="(hist, i) in history" :key="i">
-            <div class="row no-wrap items-center">
-              <q-separator class="col q-my-lg bg-accent" />
-
-              <q-badge
-                class="q-px-md text-subtitle2"
-                color="accent"
-                :label="hist.ts"
-              />
-
-              <q-separator class="col q-my-lg bg-accent" />
-            </div>
-
-            <history-item :history="hist" is-history />
-          </template>
+          <history-item
+            v-for="(hist, i) in history"
+            :key="i"
+            :history="hist"
+            is-history
+          />
         </template>
       </q-card-section>
 
       <q-separator vertical inset />
 
-      <q-card-actions class="justify-center" vertical>
+      <q-card-actions vertical>
         <template v-if="host.active === 1">
           <q-btn
             flat
@@ -200,41 +196,39 @@ export default {
     authorizedIconProps() {
       if (this.host.authorized === null) {
         return {
-          name: 'gpp_maybe',
+          icon: 'gpp_maybe',
           color: 'grey-6',
         };
       }
 
       return this.host.authorized === 0
         ? {
-          name: 'gpp_bad',
+          icon: 'gpp_bad',
           color: 'negative',
         }
         : {
-          name: 'gpp_good',
+          icon: 'gpp_good',
           color: 'positive',
         };
     },
 
-    authorizedTimeBadgeProps() {
+    authorizedTimeColor() {
       if (!this.host.ts || Number.isNaN((new Date(this.host.ts)).valueOf())) {
-        return undefined;
+        return 'text-grey-6';
       }
 
       const now = Date.now();
       const ts = (new Date(this.host.ts)).valueOf();
       const daysOld = (now - ts) / durationDay;
 
-      return {
-        // eslint-disable-next-line no-nested-ternary
-        color: daysOld > verificationDaysError
-          ? 'negative'
-          : (
-            daysOld > verificationDaysWarning
-              ? 'warning'
-              : 'positive'
-          ),
-      };
+      // eslint-disable-next-line no-nested-ternary
+      return daysOld > verificationDaysError
+        ? 'text-negative'
+        : (
+          daysOld > verificationDaysWarning
+            ? 'text-warning'
+            : 'text-positive'
+        );
     },
   },
 

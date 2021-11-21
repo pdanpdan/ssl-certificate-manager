@@ -1,12 +1,26 @@
 <template>
-  <div class="q-gutter-y-sm">
-    <div class="row items-center q-gutter-x-sm">
-      <q-icon
-        v-if="isHistory"
-        size="md"
+  <div v-if="isHistory" class="row no-wrap items-center">
+    <q-separator class="col q-my-lg bg-grey-3" />
+
+    <q-chip
+      square
+      size="md"
+      color="grey-3"
+    >
+      <q-avatar
+        font-size="24px"
+        text-color="white"
         v-bind="authorizedIconProps"
       />
 
+      {{ history.ts }}
+    </q-chip>
+
+    <q-separator class="col q-my-lg bg-grey-3" />
+  </div>
+
+  <div class="q-gutter-y-sm">
+    <div class="row items-center q-gutter-x-sm">
       <q-badge
         v-if="history.fingerprint"
         class="q-py-none"
@@ -169,18 +183,18 @@ export default {
     authorizedIconProps() {
       if (this.history.authorized === null) {
         return {
-          name: 'gpp_maybe',
+          icon: 'gpp_maybe',
           color: 'grey-6',
         };
       }
 
       return this.history.authorized === 0
         ? {
-          name: 'gpp_bad',
+          icon: 'gpp_bad',
           color: 'negative',
         }
         : {
-          name: 'gpp_good',
+          icon: 'gpp_good',
           color: 'positive',
         };
     },

@@ -190,7 +190,7 @@ contextBridge.exposeInMainWorld('sslCertAPI', {
               ), hh.fingerprint) != hh.fingerprint
             THEN 1
             ELSE 0
-          END AS fingerprintChanged,
+          END AS fingerprintChanged
         FROM hosts_history hh
         WHERE idHost = ?
         ORDER BY

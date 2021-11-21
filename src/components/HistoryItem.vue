@@ -1,6 +1,12 @@
 <template>
   <div class="q-gutter-y-sm">
     <div class="row items-center q-gutter-x-sm">
+      <q-icon
+        v-if="isHistory"
+        size="md"
+        v-bind="authorizedIconProps"
+      />
+
       <q-badge
         v-if="history.fingerprint"
         class="q-py-none"
@@ -21,26 +27,6 @@
         <q-icon class="q-mr-xs" size="20px" name="straighten" />
 
         {{ $tc('certificate.bits', certificateData.bits) }}
-      </q-badge>
-
-      <q-icon
-        v-if="hideAuthorized !== true"
-        class="q-mr-xs"
-        size="sm"
-        v-bind="authorizedIconProps"
-      />
-
-      <q-space />
-
-      <q-badge
-        v-if="hideTs !== true"
-        class="q-py-none"
-        color="dark"
-        outline
-      >
-        <q-icon class="q-mr-xs" size="20px" name="schedule" />
-
-        {{ history.ts }}
       </q-badge>
     </div>
 
@@ -167,8 +153,10 @@ export default {
       required: true,
     },
 
-    hideTs: Boolean,
-    hideAuthorized: Boolean,
+    isHistory: {
+      type: Boolean,
+      default: false,
+    },
   },
 
   data() {

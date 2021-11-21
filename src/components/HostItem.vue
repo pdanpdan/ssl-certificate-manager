@@ -33,13 +33,26 @@
             :label="host.historyLength"
           />
         </q-btn>
+
+        <template v-if="host.historyLength > 1">
+          <q-separator spaced />
+
+          <q-btn
+            flat
+            size="lg"
+            padding="xs"
+            :color="showHistory ? 'accent' : 'secondary'"
+            :icon="showHistory ? 'history' : 'history_toggle_off'"
+            @click="showHistory = showHistory !== true"
+          />
+        </template>
       </q-card-actions>
 
       <q-separator vertical inset />
 
       <q-card-section class="col q-gutter-y-sm">
         <div class="row items-center q-gutter-x-sm">
-          <q-icon size="sm" v-bind="authorizedIconProps" />
+          <q-icon size="md" v-bind="authorizedIconProps" />
 
           <div class="text-subtitle1 text-weight-bold">
             {{ host.description }}
@@ -87,11 +100,25 @@
         <template v-if="host.ts">
           <q-separator spaced />
 
-          <history-item
-            :history="host"
-            hide-ts
-            hide-authorized
-          />
+          <history-item :history="host" />
+        </template>
+
+        <template v-if="showHistory && history.length > 0">
+          <template v-for="(hist, i) in history" :key="i">
+            <div class="row no-wrap items-center">
+              <q-separator class="col q-my-lg bg-accent" />
+
+              <q-badge
+                class="q-px-md text-subtitle2"
+                color="accent"
+                :label="hist.ts"
+              />
+
+              <q-separator class="col q-my-lg bg-accent" />
+            </div>
+
+            <history-item :history="hist" is-history />
+          </template>
         </template>
       </q-card-section>
 
@@ -163,6 +190,9 @@ export default {
   data() {
     return {
       processing: false,
+
+      showHistory: false,
+      history: [],
     };
   },
 
@@ -205,6 +235,21 @@ export default {
               : 'positive'
           ),
       };
+    },
+  },
+
+  watch: {
+    showHistory(val) {
+      if (val === true) {
+        window.sslCertAPI
+          .readHostHistory({ id: this.host.id })
+          .then((history) => {
+            this.history = history.slice(1);
+          })
+          .catch(() => {
+            this.history = [];
+          });
+      }
     },
   },
 

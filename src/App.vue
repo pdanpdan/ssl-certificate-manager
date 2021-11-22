@@ -1,10 +1,30 @@
 <template>
   <q-layout view="hHh lpR fFf">
+    <q-header>
+      <q-toolbar class="bg-dark">
+        <q-toolbar-title>
+          {{ appName }}
+        </q-toolbar-title>
+      </q-toolbar>
+    </q-header>
+
     <q-page-container>
       <router-view />
     </q-page-container>
 
-    <div class="fixed-bottom-right q-pa-sm text-grey-8 z-top no-pointer-events">ver. {{ appVersion }}</div>
+    <q-footer>
+      <div class="row no-wrap items-center q-px-md q-py-xs bg-dark">
+        <div class="text-caption">
+          {{ appAuthor }}
+        </div>
+
+        <q-space />
+
+        <div class="text-caption">
+          ver. {{ appVersion }}
+        </div>
+      </div>
+    </q-footer>
   </q-layout>
 </template>
 
@@ -15,6 +35,8 @@ export default {
   data() {
     return {
       appVersion: process.env.appVersion,
+      appName: process.env.appName,
+      appAuthor: process.env.appAuthor,
     };
   },
 

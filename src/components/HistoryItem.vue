@@ -137,7 +137,7 @@
         dense
         dark
         header-class="text-italic"
-        :label="$t('certificate.details')"
+        :label="`${ $tc('certificate.certificate', history.certificates.length) } - ${ $t('certificate.details') }`"
       >
         <div
           v-for="(certificate, i) in history.certificates"
@@ -145,11 +145,11 @@
           class="q-pb-sm relative-position"
         >
           <q-badge
-            class="absolute-bottom-right q-ma-sm text-body1 q-px-md no-border-radius"
+            class="absolute-bottom-right q-ma-sm text-subtitle2 q-px-md no-border-radius"
             style="z-index: 1"
             color="secondary"
             transparent
-            :label="`${ i + 1 } / ${ history.certificates.length }`"
+            :label="$t('certificate.certificate_pos_of_total', { pos: i + 1, total: history.certificates.length })"
           />
 
           <q-scroll-area

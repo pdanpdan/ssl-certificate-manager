@@ -1,6 +1,8 @@
 {
   "certificate": {
     "bits": "{n} bits | {n} bit | {n} bits",
+    "certificate": "{n} certificates | {n} certificate | {n} certificates",
+    "certificate_pos_of_total": "Certificate {pos} of {total}",
     "details": "Details",
     "expire_after": "Expires in more than",
     "expire_days": "{n} days | {n} day | {n} days",

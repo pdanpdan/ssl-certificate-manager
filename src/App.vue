@@ -40,7 +40,7 @@ export default {
     };
   },
 
-  created() {
+  beforeMount() {
     window.sslCertAPI
       .openDb()
       .then(() => this.$store.dispatch('config/readConfig'))
@@ -50,11 +50,7 @@ export default {
   },
 
   beforeUnmount() {
-    window.sslCertAPI
-      .closeDb()
-      .catch((err) => {
-        console.error('[sqlite] close:', err);
-      });
+    window.sslCertAPI.closeDb();
   },
 };
 </script>

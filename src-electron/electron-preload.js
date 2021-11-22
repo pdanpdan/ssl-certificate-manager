@@ -140,14 +140,12 @@ contextBridge.exposeInMainWorld('sslCertAPI', {
   },
 
   closeDb() {
-    return sqlite.dbPromise !== undefined
-      ? sqlite.dbPromise.then((db) => {
-        writeFileSync(sqlite.filePath, Buffer.from(db.export()));
-        db.close();
-        sqlite.db = undefined;
-        sqlite.dbPromise = undefined;
-      })
-      : Promise.resolve();
+    if (sqlite.db !== undefined) {
+      writeFileSync(sqlite.filePath, Buffer.from(sqlite.db.export()));
+      sqlite.db.close();
+      sqlite.db = undefined;
+      sqlite.dbPromise = undefined;
+    }
   },
 
   readConfig() {

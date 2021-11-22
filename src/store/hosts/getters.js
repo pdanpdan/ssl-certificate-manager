@@ -1,6 +1,6 @@
-import { durationDay, certificateAboutToExpireDaysWarning } from '../config.js';
+export function filteredHosts(state, _, rootState) {
+  const { durationDay, certificateAboutToExpireDaysWarning } = rootState.config.config;
 
-export function filteredHosts(state) {
   const needle = typeof state.filters.search !== 'string' ? '' : state.filters.search.trim().toLocaleLowerCase();
   const searchFn = needle.length === 0
     ? () => true

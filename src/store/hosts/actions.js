@@ -10,11 +10,15 @@ export function readHosts({ state, commit }) {
   return window.sslCertAPI
     .readHosts(state.filters.active)
     .then((hosts) => {
-      commit('SET_HOSTS', hosts.map((host) => ({
+      const hostsFilled = hosts.map((host) => ({
         ...host,
         selected: (state.hosts.find((h) => h.id === host.id) || {}).selected === true,
         search: hostSearchKeys.map((k) => host[k]).join('#').toLocaleLowerCase(),
-      })));
+      }));
+
+      commit('SET_HOSTS', hostsFilled);
+
+      return hostsFilled;
     })
     .catch((error) => {
       console.error(error);

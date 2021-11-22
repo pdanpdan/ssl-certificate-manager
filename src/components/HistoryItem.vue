@@ -171,13 +171,7 @@
 
 <script>
 import { date } from 'quasar';
-
-import {
-  durationDay,
-  certificateBitsError,
-  certificateBitsWarning,
-  certificateAboutToExpireDaysWarning,
-} from '../store/config.js';
+import { mapState } from 'vuex';
 
 const { formatDate } = date;
 
@@ -203,6 +197,10 @@ export default {
   },
 
   computed: {
+    ...mapState('config', [
+      'config',
+    ]),
+
     authorizedStateProps() {
       if (this.history.authorized === null) {
         return {
@@ -244,9 +242,9 @@ export default {
         issuer: cert.issuer.CN,
         bits: cert.bits,
         // eslint-disable-next-line no-nested-ternary
-        bitsColor: cert.bits < certificateBitsError ? 'negative' : (cert.bits < certificateBitsWarning ? 'warning' : 'positive'),
+        bitsColor: cert.bits < this.config.certificateBitsError ? 'negative' : (cert.bits < this.config.certificateBitsWarning ? 'warning' : 'positive'),
         // eslint-disable-next-line no-nested-ternary
-        bitsTooltip: this.$t(`certificate.tooltip_bits_${ cert.bits < certificateBitsError ? 'low' : (cert.bits < certificateBitsWarning ? 'medium' : 'high') }`),
+        bitsTooltip: this.$t(`certificate.tooltip_bits_${ cert.bits < this.config.certificateBitsError ? 'low' : (cert.bits < this.config.certificateBitsWarning ? 'medium' : 'high') }`),
         validFrom: (new Date(cert.valid_from)).valueOf(),
         validTo: (new Date(cert.valid_to)).valueOf(),
       };
@@ -274,9 +272,9 @@ export default {
         if (data.validToExpired) {
           data.validToExpireLabel = this.$t('certificate.expire_expired');
         } else {
-          const diffDays = Math.floor((data.validTo - now) / durationDay);
+          const diffDays = Math.floor((data.validTo - now) / this.config.durationDay);
 
-          if (diffDays < certificateAboutToExpireDaysWarning) {
+          if (diffDays < this.config.certificateAboutToExpireDaysWarning) {
             data.validToAboutToExpire = true;
           }
 

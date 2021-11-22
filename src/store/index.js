@@ -1,6 +1,7 @@
 import { store } from 'quasar/wrappers';
 import { createStore } from 'vuex';
 
+import config from './config';
 import hosts from './hosts';
 
 /*
@@ -15,6 +16,7 @@ import hosts from './hosts';
 export default store(() => {
   const Store = createStore({
     modules: {
+      config,
       hosts,
     },
 

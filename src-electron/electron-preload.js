@@ -7,9 +7,15 @@ import * as tls from 'tls';
 
 import isDeepEqual from '../src/utils/isDeepEqual.js';
 
+const DB_VERSION = 1;
+
 const sqlite = {};
 
 const sqliteRes2Rows = (res, mapFn) => {
+  if (res.length === 0) {
+    return [];
+  }
+
   const [{ columns, values }] = res;
 
   return (values || []).map((value, valueIndex) => {
@@ -71,7 +77,23 @@ contextBridge.exposeInMainWorld('sslCertAPI', {
             sqlite.db = new SQL.Database(dbFile);
           } catch (err) {
             sqlite.db = new SQL.Database();
+          }
 
+          sqlite.db.run(`
+            CREATE TABLE IF NOT EXISTS config (
+              id INTEGER PRIMARY KEY,
+              version INTEGER NOT NULL DEFAULT ${ DB_VERSION },
+              verificationDaysError INTEGER NOT NULL DEFAULT 30,
+              verificationDaysWarning INTEGER NOT NULL DEFAULT 7,
+              certificateBitsError INTEGER NOT NULL DEFAULT 2048,
+              certificateBitsWarning INTEGER NOT NULL DEFAULT 4096,
+              certificateAboutToExpireDaysWarning INTEGER NOT NULL DEFAULT 45
+            )
+          `);
+
+          const config = sqliteRes2Rows(sqlite.db.exec('SELECT * FROM config WHERE id = 1'));
+
+          if (config.length === 0 || config[0].version !== 1) {
             sqlite.db.run(`
               CREATE TABLE IF NOT EXISTS hosts (
                 id INTEGER PRIMARY KEY,
@@ -102,8 +124,10 @@ contextBridge.exposeInMainWorld('sslCertAPI', {
               ON hosts_history (idHost, ts);
             `);
 
-            writeFileSync(sqlite.filePath, Buffer.from(sqlite.db.export()));
+            sqlite.db.run('REPLACE INTO config (id, version) VALUES (1, ?)', [DB_VERSION]);
           }
+
+          writeFileSync(sqlite.filePath, Buffer.from(sqlite.db.export()));
 
           resolve(sqlite.db);
         })
@@ -124,6 +148,56 @@ contextBridge.exposeInMainWorld('sslCertAPI', {
         sqlite.dbPromise = undefined;
       })
       : Promise.resolve();
+  },
+
+  readConfig() {
+    if (sqlite.dbPromise === undefined) {
+      return Promise.reject(new Error('Cannot open db'));
+    }
+
+    return sqlite.dbPromise.then((db) => {
+      const rows = sqliteRes2Rows(db.exec('SELECT * FROM config WHERE id = 1'));
+
+      return {
+        verificationDaysError: 30,
+        verificationDaysWarning: 7,
+        certificateBitsError: 2048,
+        certificateBitsWarning: 4096,
+        certificateAboutToExpireDaysWarning: 45,
+        ...rows[0],
+      };
+    });
+  },
+
+  writeConfig(config) {
+    if (sqlite.dbPromise === undefined) {
+      return Promise.reject(new Error('Cannot open db'));
+    }
+
+    if (config !== Object(config)) {
+      return Promise.reject(new Error('Invalid config definition'));
+    }
+
+    return sqlite.dbPromise.then((db) => {
+      db.run(`
+        UPDATE config
+        SET
+          verificationDaysError = COALESCE(?, verificationDaysError),
+          verificationDaysWarning = COALESCE(?, verificationDaysWarning),
+          certificateBitsError = COALESCE(?, certificateBitsError),
+          certificateBitsWarning = COALESCE(?, certificateBitsWarning),
+          certificateAboutToExpireDaysWarning = COALESCE(?, certificateAboutToExpireDaysWarning)
+        WHERE id = 1
+      `, [
+        config.verificationDaysError === undefined ? null : config.verificationDaysError,
+        config.verificationDaysWarning === undefined ? null : config.verificationDaysWarning,
+        config.certificateBitsError === undefined ? null : config.certificateBitsError,
+        config.certificateBitsWarning === undefined ? null : config.certificateBitsWarning,
+        config.certificateAboutToExpireDaysWarning === undefined ? null : config.certificateAboutToExpireDaysWarning,
+      ]);
+
+      writeFileSync(sqlite.filePath, Buffer.from(db.export()));
+    });
   },
 
   readHosts(listAll) {

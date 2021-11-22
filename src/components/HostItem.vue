@@ -208,11 +208,10 @@
 </template>
 
 <script>
-import { mapActions } from 'vuex';
+import { mapState, mapActions } from 'vuex';
 
 import HostEdit from 'components/HostEditDialog.vue';
 import HistoryItem from 'components/HistoryItem.vue';
-import { durationDay, verificationDaysError, verificationDaysWarning } from '../store/config.js';
 import { getFullHostName } from '../store/hosts/state.js';
 
 export default {
@@ -241,6 +240,10 @@ export default {
   },
 
   computed: {
+    ...mapState('config', [
+      'config',
+    ]),
+
     authorizedStateProps() {
       if (this.host.authorized === null) {
         return {
@@ -279,16 +282,16 @@ export default {
 
       const now = Date.now();
       const ts = (new Date(this.host.ts)).valueOf();
-      const daysOld = (now - ts) / durationDay;
+      const daysOld = (now - ts) / this.config.durationDay;
 
       // eslint-disable-next-line no-nested-ternary
-      return daysOld > verificationDaysError
+      return daysOld > this.config.verificationDaysError
         ? {
           class: 'text-negative',
           tooltip: this.$t('certificate.tooltip_checked_long_ago'),
         }
         : (
-          daysOld > verificationDaysWarning
+          daysOld > this.config.verificationDaysWarning
             ? {
               class: 'text-warning',
               tooltip: this.$t('certificate.tooltip_checked_not_recently'),

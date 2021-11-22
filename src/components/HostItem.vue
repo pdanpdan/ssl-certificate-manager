@@ -1,12 +1,11 @@
 <template>
-  <q-card flat square bordered>
+  <q-card class="shadow-12" square>
     <q-card-section horizontal>
       <q-card-actions vertical>
         <q-checkbox
-          v-if="host.active === 1"
           :model-value="host.selected"
           color="primary"
-          :disable="processing || locked"
+          :disable="processing || locked || host.active !== 1"
           @update:model-value="selectHost"
         />
       </q-card-actions>
@@ -136,7 +135,7 @@
               size="lg"
               padding="xs"
               color="primary"
-              icon="edit"
+              icon="settings"
               :disable="processing || locked"
               @click="editHost"
             />
@@ -164,7 +163,7 @@
               size="lg"
               padding="xs"
               color="negative"
-              icon="delete"
+              icon="delete_outline"
               :disable="processing || locked"
               @click="deleteHost"
             />
@@ -299,6 +298,22 @@ export default {
             }
         );
     },
+
+    computedHostName() {
+      let name = '';
+
+      if (this.host.description && this.host.description !== this.host.hostname) {
+        name = `${ this.host.description } - `;
+      }
+
+      name += `${ this.host.hostname }:${ this.host.port }`;
+
+      if (this.host.servername && this.host.servername !== this.host.hostname) {
+        name += ` / ${ this.host.servername }`;
+      }
+
+      return name;
+    },
   },
 
   watch: {
@@ -342,10 +357,12 @@ export default {
     deleteHost() {
       this.$q
         .dialog({
-          title: this.$t('host.title_delete'),
+          title: `${ this.$t('host.title_delete') }?`,
+          message: this.computedHostName,
           ok: {
             label: this.$t('host.btn_delete'),
             color: 'negative',
+            unelevated: true,
           },
           cancel: {
             label: this.$t('host.btn_cancel'),
@@ -366,10 +383,12 @@ export default {
     archiveHost() {
       this.$q
         .dialog({
-          title: this.$t('host.title_archive'),
+          title: `${ this.$t('host.title_archive') }?`,
+          message: this.computedHostName,
           ok: {
             label: this.$t('host.btn_archive'),
             color: 'negative',
+            unelevated: true,
           },
           cancel: {
             label: this.$t('host.btn_cancel'),

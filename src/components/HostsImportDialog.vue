@@ -28,6 +28,7 @@
               :model-value="hostname"
               outlined
               square
+              color="primary"
               required
               autofocus
               hide-bottom-space
@@ -40,6 +41,7 @@
               v-model="category"
               outlined
               square
+              color="primary"
               :label="$t('host.label_category')"
             />
 
@@ -47,6 +49,7 @@
               v-model="port"
               outlined
               square
+              color="primary"
               required
               :label="$t('host.label_port')"
             />
@@ -55,6 +58,7 @@
               v-model="servername"
               outlined
               square
+              color="primary"
               :label="$t('host.label_servername')"
               :readonly="hasHistory"
             />
@@ -63,6 +67,7 @@
               v-model="description"
               outlined
               square
+              color="primary"
               :label="$t('host.label_description')"
             />
           </q-card-section>

@@ -1,6 +1,6 @@
 <template>
-  <div v-if="isHistory" class="row no-wrap items-center">
-    <q-separator class="col q-my-lg bg-grey-3" />
+  <div v-if="isHistory" class="q-mt-lg row no-wrap items-center" style="margin-left: -16px; margin-right: -16px">
+    <q-separator class="col q-my-lg" />
 
     <q-chip
       square
@@ -10,37 +10,43 @@
       <q-avatar
         font-size="24px"
         text-color="white"
-        v-bind="authorizedIconProps"
-      />
+        v-bind="authorizedStateProps.avatar"
+      >
+        <q-tooltip>{{ authorizedStateProps.tooltip }}</q-tooltip>
+      </q-avatar>
 
-      {{ history.ts }}
+      <div class="q-pl-sm">
+        {{ history.ts }}
+      </div>
     </q-chip>
 
-    <q-separator class="col q-my-lg bg-grey-3" />
+    <q-separator class="col q-my-lg" />
   </div>
 
   <div class="q-gutter-y-sm">
     <div class="row items-center q-gutter-x-sm">
       <q-badge
         v-if="history.fingerprint"
-        class="q-py-none"
+        class="q-py-none no-border-radius"
         :color="history.fingerprintChanged === 1 ? 'warning' : 'dark'"
         outline
       >
         <q-icon class="q-mr-xs" size="20px" name="fingerprint" />
 
         {{ history.fingerprint }}
+        <q-tooltip v-if="history.fingerprintChanged === 1">{{ $t('certificate.tooltip_fingerprint_changed') }}</q-tooltip>
       </q-badge>
 
       <q-badge
         v-if="certificateData"
-        class="q-py-none"
+        class="q-py-none no-border-radius"
         :color="certificateData.bitsColor"
         outline
       >
         <q-icon class="q-mr-xs" size="20px" name="straighten" />
 
         {{ $tc('certificate.bits', certificateData.bits) }}
+        <q-tooltip>{{ certificateData.bitsTooltip }}</q-tooltip>
       </q-badge>
     </div>
 
@@ -49,21 +55,19 @@
         <q-badge
           v-for="(error, i) in history.errors"
           :key="i"
-          class="q-py-xs q-px-sm"
+          class="q-py-xs q-px-sm no-border-radius"
           color="negative"
           outline
         >
           {{ error.code }}
 
-          <q-tooltip class="q-py-sm q-px-md text-caption">{{ error.type }}: {{ error.code }}</q-tooltip>
+          <q-tooltip>{{ error.type }}: {{ error.code }}</q-tooltip>
         </q-badge>
       </div>
     </div>
 
     <q-list
       v-if="certificateData"
-      class="rounded-borders"
-      bordered
       separator
       dense
     >
@@ -103,7 +107,7 @@
         </q-item-section>
         <q-item-section side>
           <q-badge
-            class="q-py-xs q-px-sm"
+            class="q-py-xs q-px-sm no-border-radius"
             :color="certificateData.validFromExpired ? 'negative' : 'positive'"
             outline
             :label="certificateData.validFromExpireLabel"
@@ -120,32 +124,44 @@
         </q-item-section>
         <q-item-section side>
           <q-badge
-            class="q-py-xs q-px-sm"
+            class="q-py-xs q-px-sm no-border-radius"
             :color="certificateData.validToExpired ? 'negative' : (certificateData.validToAboutToExpire ? 'warning' : 'positive')"
             outline
             :label="certificateData.validToExpireLabel"
           />
         </q-item-section>
       </q-item>
-    </q-list>
 
-    <q-list class="rounded-borders overflow-hidden" dense bordered>
       <q-expansion-item
+        class="bg-secondary"
         dense
         dark
-        header-class="text-italic bg-secondary"
+        header-class="text-italic"
         :label="$t('certificate.details')"
       >
-        <template v-for="(certificate, i) in history.certificates" :key="i">
-          <q-separator v-if="i > 0" />
+        <div
+          v-for="(certificate, i) in history.certificates"
+          :key="i"
+          class="q-pb-sm relative-position"
+        >
+          <q-badge
+            class="absolute-bottom-right q-ma-sm text-body1 q-px-md no-border-radius"
+            style="z-index: 1"
+            color="secondary"
+            transparent
+            :label="`${ i + 1 } / ${ history.certificates.length }`"
+          />
 
-          <q-scroll-area class="q-my-xs" style="height: 20em; max-height: 50vh">
+          <q-scroll-area
+            class="q-mx-sm"
+            style="height: 20em; max-height: 50vh"
+          >
             <pre
-              class="q-pa-md q-my-none"
+              class="q-pa-md q-my-none bg-grey-2"
               style="font-size: 10px; white-space: pre-wrap; word-break: break-all"
             ><samp>{{ certificate }}</samp></pre>
           </q-scroll-area>
-        </template>
+        </div>
       </q-expansion-item>
     </q-list>
   </div>
@@ -154,9 +170,14 @@
 <script>
 import { date } from 'quasar';
 
-import { certificateBitsError, certificateBitsWarning, certificateAboutToExpireDaysWarning } from '../store/config.js';
+import {
+  durationDay,
+  certificateBitsError,
+  certificateBitsWarning,
+  certificateAboutToExpireDaysWarning,
+} from '../store/config.js';
 
-const { formatDate, getDateDiff } = date;
+const { formatDate } = date;
 
 export default {
   name: 'HistoryItemComponent',
@@ -180,22 +201,31 @@ export default {
   },
 
   computed: {
-    authorizedIconProps() {
+    authorizedStateProps() {
       if (this.history.authorized === null) {
         return {
-          icon: 'gpp_maybe',
-          color: 'grey-6',
+          avatar: {
+            icon: 'gpp_maybe',
+            color: 'grey-6',
+          },
+          tooltip: this.$t('certificate.not_checked'),
         };
       }
 
       return this.history.authorized === 0
         ? {
-          icon: 'gpp_bad',
-          color: 'negative',
+          avatar: {
+            icon: 'gpp_bad',
+            color: 'negative',
+          },
+          tooltip: this.$t('certificate.invalid'),
         }
         : {
-          icon: 'gpp_good',
-          color: 'positive',
+          avatar: {
+            icon: 'gpp_good',
+            color: 'positive',
+          },
+          tooltip: this.$t('certificate.valid'),
         };
     },
 
@@ -204,7 +234,7 @@ export default {
         return undefined;
       }
 
-      const now = new Date();
+      const now = Date.now();
       const cert = this.history.certificates[0];
       const data = {
         subject: cert.subject.CN,
@@ -213,11 +243,13 @@ export default {
         bits: cert.bits,
         // eslint-disable-next-line no-nested-ternary
         bitsColor: cert.bits < certificateBitsError ? 'negative' : (cert.bits < certificateBitsWarning ? 'warning' : 'positive'),
-        validFrom: new Date(cert.valid_from),
-        validTo: new Date(cert.valid_to),
+        // eslint-disable-next-line no-nested-ternary
+        bitsTooltip: this.$t(`certificate.tooltip_bits_${ cert.bits < certificateBitsError ? 'low' : (cert.bits < certificateBitsWarning ? 'medium' : 'high') }`),
+        validFrom: (new Date(cert.valid_from)).valueOf(),
+        validTo: (new Date(cert.valid_to)).valueOf(),
       };
 
-      if (Number.isNaN(data.validFrom.valueOf())) {
+      if (Number.isNaN(data.validFrom)) {
         data.validFromText = 'N/A';
         data.validFromExpired = false;
         data.validFromExpireLabel = 'N/A';
@@ -227,7 +259,7 @@ export default {
         data.validFromExpireLabel = data.validFromExpired ? this.$t('certificate.expire_not_yet_valid') : this.$t('certificate.valid');
       }
 
-      if (Number.isNaN(data.validTo.valueOf())) {
+      if (Number.isNaN(data.validTo)) {
         data.validToText = 'N/A';
         data.validToExpired = false;
         data.validToAboutToExpire = false;
@@ -240,26 +272,23 @@ export default {
         if (data.validToExpired) {
           data.validToExpireLabel = this.$t('certificate.expire_expired');
         } else {
-          let diff = getDateDiff(data.validTo, now, 'days');
+          const diffDays = Math.floor((data.validTo - now) / durationDay);
 
-          if (diff < certificateAboutToExpireDaysWarning) {
+          if (diffDays < certificateAboutToExpireDaysWarning) {
             data.validToAboutToExpire = true;
           }
 
-          diff = getDateDiff(data.validTo, now, 'years');
+          let diff = Math.floor(diffDays / 365);
           if (diff > 0) {
             data.validToExpireLabel = `${ this.$t('certificate.expire_after') } ${ this.$tc('certificate.expire_years', diff) }`;
           } else {
-            diff = getDateDiff(data.validTo, now, 'months');
+            diff = Math.floor(diffDays / 31);
             if (diff > 0) {
               data.validToExpireLabel = `${ this.$t('certificate.expire_after') } ${ this.$tc('certificate.expire_months', diff) }`;
+            } else if (diffDays > 0) {
+              data.validToExpireLabel = `${ this.$t('certificate.expire_after') } ${ this.$tc('certificate.expire_days', diffDays) }`;
             } else {
-              diff = getDateDiff(data.validTo, now, 'days');
-              if (diff > 0) {
-                data.validToExpireLabel = `${ this.$t('certificate.expire_after') } ${ this.$tc('certificate.expire_days', diff) }`;
-              } else {
-                data.validToExpireLabel = this.$t('certificate.expire_today');
-              }
+              data.validToExpireLabel = this.$t('certificate.expire_today');
             }
           }
         }

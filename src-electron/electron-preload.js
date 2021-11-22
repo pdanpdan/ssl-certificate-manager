@@ -52,80 +52,87 @@ contextBridge.exposeInMainWorld('sslCertAPI', {
   openDb() {
     sqlite.basePath = app.getPath('userData');
     sqlite.fileName = 'ssl_certs.sqlite';
+    // sqlite.fileName = 'ssl_certs_v1.sqlite';
     sqlite.filePath = pathResolve(sqlite.basePath, sqlite.fileName);
     sqlite.initSqlJs = initSqlJs;
 
-    return sqlite
-      .initSqlJs({
-        // Required to load the wasm binary asynchronously. Of course, you can host it wherever you want
-        // You can omit locateFile completely when running in node
-        locateFile: (file) => `sql.js/${ file }`,
-      })
-      .then((SQL) => {
-        sqlite.SQL = SQL;
+    sqlite.dbPromise = new Promise((resolve, reject) => {
+      sqlite
+        .initSqlJs({
+          // Required to load the wasm binary asynchronously. Of course, you can host it wherever you want
+          // You can omit locateFile completely when running in node
+          locateFile: (file) => `sql.js/${ file }`,
+        })
+        .then((SQL) => {
+          sqlite.SQL = SQL;
 
-        try {
-          const dbFile = readFileSync(sqlite.filePath);
-          sqlite.db = new SQL.Database(dbFile);
-        } catch (err) {
-          sqlite.db = new SQL.Database();
-        }
+          try {
+            const dbFile = readFileSync(sqlite.filePath);
+            sqlite.db = new SQL.Database(dbFile);
+          } catch (err) {
+            sqlite.db = new SQL.Database();
 
-        sqlite.db.run(`
-          CREATE TABLE IF NOT EXISTS hosts (
-            id INTEGER PRIMARY KEY,
-            hostname TEXT NOT NULL,
-            servername TEXT NOT NULL DEFAULT '',
-            port INTEGER NOT NULL DEFAULT 443,
-            description TEXT NOT NULL DEFAULT '',
-            category TEXT NOT NULL DEFAULT '',
-            active INTEGER NOT NULL DEFAULT 1,
-            idHistory INTEGER DEFAULT NULL
-          )
-        `);
+            sqlite.db.run(`
+              CREATE TABLE IF NOT EXISTS hosts (
+                id INTEGER PRIMARY KEY,
+                hostname TEXT NOT NULL,
+                servername TEXT NOT NULL DEFAULT '',
+                port INTEGER NOT NULL DEFAULT 443,
+                description TEXT NOT NULL DEFAULT '',
+                category TEXT NOT NULL DEFAULT '',
+                active INTEGER NOT NULL DEFAULT 1,
+                idHistory INTEGER DEFAULT NULL
+              )
+            `);
 
-        sqlite.db.run(`
-          CREATE TABLE IF NOT EXISTS hosts_history (
-            id INTEGER PRIMARY KEY,
-            idHost INTEGER NOT NULL,
-            ts DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            authorized INTEGER NOT NULL DEFAULT 0,
-            fingerprint TEXT DEFAULT NULL,
-            certificates TEXT DEFAULT NULL,
-            errors TEXT DEFAULT NULL
-          )
-        `);
+            sqlite.db.run(`
+              CREATE TABLE IF NOT EXISTS hosts_history (
+                id INTEGER PRIMARY KEY,
+                idHost INTEGER NOT NULL,
+                ts DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                authorized INTEGER NOT NULL DEFAULT 0,
+                fingerprint TEXT DEFAULT NULL,
+                certificates TEXT DEFAULT NULL,
+                errors TEXT DEFAULT NULL
+              )
+            `);
 
-        sqlite.db.run(`
-          CREATE INDEX IF NOT EXISTS idx_hosts_history_idHost
-          ON hosts_history (idHost, ts);
-        `);
+            sqlite.db.run(`
+              CREATE INDEX IF NOT EXISTS idx_hosts_history_idHost
+              ON hosts_history (idHost, ts);
+            `);
 
-        writeFileSync(sqlite.filePath, Buffer.from(sqlite.db.export()));
-      });
+            writeFileSync(sqlite.filePath, Buffer.from(sqlite.db.export()));
+          }
+
+          resolve(sqlite.db);
+        })
+        .catch((err) => {
+          reject(err);
+        });
+    });
+
+    return sqlite.dbPromise;
   },
 
   closeDb() {
-    try {
-      if (sqlite.db !== undefined) {
-        writeFileSync(sqlite.filePath, Buffer.from(sqlite.db.export()));
-        sqlite.db.close();
+    return sqlite.dbPromise !== undefined
+      ? sqlite.dbPromise.then((db) => {
+        writeFileSync(sqlite.filePath, Buffer.from(db.export()));
+        db.close();
         sqlite.db = undefined;
-      }
-
-      return Promise.resolve();
-    } catch (err) {
-      return Promise.reject(err);
-    }
+        sqlite.dbPromise = undefined;
+      })
+      : Promise.resolve();
   },
 
   readHosts(listAll) {
-    if (sqlite.db === undefined) {
+    if (sqlite.dbPromise === undefined) {
       return Promise.reject(new Error('Cannot open db'));
     }
 
-    try {
-      const res = sqlite.db.exec(`
+    return sqlite.dbPromise.then((db) => {
+      const res = db.exec(`
         SELECT
           h.*,
           hh.ts,
@@ -161,14 +168,12 @@ contextBridge.exposeInMainWorld('sslCertAPI', {
           h.servername
       `);
 
-      return Promise.resolve(sqliteRes2Rows(res, parseErrorsAndCertificates));
-    } catch (err) {
-      return Promise.reject(err);
-    }
+      return sqliteRes2Rows(res, parseErrorsAndCertificates);
+    });
   },
 
   readHostHistory(host) {
-    if (sqlite.db === undefined) {
+    if (sqlite.dbPromise === undefined) {
       return Promise.reject(new Error('Cannot open db'));
     }
 
@@ -176,8 +181,8 @@ contextBridge.exposeInMainWorld('sslCertAPI', {
       return Promise.reject(new Error('Invalid host definition'));
     }
 
-    try {
-      const res = sqlite.db.exec(`
+    return sqlite.dbPromise.then((db) => {
+      const res = db.exec(`
         SELECT
           hh.*,
           CASE
@@ -200,14 +205,12 @@ contextBridge.exposeInMainWorld('sslCertAPI', {
           hh.ts DESC
       `, [host.id]);
 
-      return Promise.resolve(sqliteRes2Rows(res, parseErrorsAndCertificates));
-    } catch (err) {
-      return Promise.reject(err);
-    }
+      return sqliteRes2Rows(res, parseErrorsAndCertificates);
+    });
   },
 
   writeHost(host) {
-    if (sqlite.db === undefined) {
+    if (sqlite.dbPromise === undefined) {
       return Promise.reject(new Error('Cannot open db'));
     }
 
@@ -215,9 +218,9 @@ contextBridge.exposeInMainWorld('sslCertAPI', {
       return Promise.reject(new Error('Invalid host definition'));
     }
 
-    try {
+    return sqlite.dbPromise.then((db) => {
       if (host.id === undefined) {
-        sqlite.db.run(`
+        db.run(`
           INSERT INTO hosts (
             hostname,
             servername,
@@ -236,7 +239,7 @@ contextBridge.exposeInMainWorld('sslCertAPI', {
           host.active ? 1 : 0,
         ]);
       } else {
-        sqlite.db.run(`
+        db.run(`
           UPDATE hosts
           SET
             hostname = COALESCE(?, hostname),
@@ -245,7 +248,7 @@ contextBridge.exposeInMainWorld('sslCertAPI', {
             description = COALESCE(?, description),
             category = COALESCE(?, category),
             active = COALESCE(?, active)
-          WHERE id=?
+          WHERE id = ?
         `, [
           host.hostname === undefined ? null : host.hostname,
           host.servername === undefined ? null : host.servername,
@@ -258,16 +261,33 @@ contextBridge.exposeInMainWorld('sslCertAPI', {
         ]);
       }
 
-      writeFileSync(sqlite.filePath, Buffer.from(sqlite.db.export()));
+      writeFileSync(sqlite.filePath, Buffer.from(db.export()));
+    });
+  },
 
-      return Promise.resolve();
-    } catch (err) {
-      return Promise.reject(err);
+  deleteHost(host) {
+    if (sqlite.dbPromise === undefined) {
+      return Promise.reject(new Error('Cannot open db'));
     }
+
+    if (host !== Object(host) || host.id === undefined) {
+      return Promise.reject(new Error('Invalid host definition'));
+    }
+
+    return sqlite.dbPromise.then((db) => {
+      db.run(`
+        DELETE FROM hosts
+        WHERE id = ?
+      `, [
+        host.id,
+      ]);
+
+      writeFileSync(sqlite.filePath, Buffer.from(db.export()));
+    });
   },
 
   writeHostHistory(host, history) {
-    if (sqlite.db === undefined) {
+    if (sqlite.dbPromise === undefined) {
       return Promise.reject(new Error('Cannot open db'));
     }
 
@@ -281,9 +301,9 @@ contextBridge.exposeInMainWorld('sslCertAPI', {
 
     const changed = certificateChangedKeys.reduce((acc, key) => acc || isDeepEqual(host[key], history[key]) !== true, !host.idHistory);
 
-    try {
+    return sqlite.dbPromise.then((db) => {
       if (changed === true) {
-        const res = sqlite.db.exec(`
+        const res = db.exec(`
           INSERT INTO hosts_history (
             idHost,
             authorized,
@@ -304,7 +324,7 @@ contextBridge.exposeInMainWorld('sslCertAPI', {
         const rows = sqliteRes2Rows(res);
 
         if (rows.length > 0 && rows[0].id) {
-          sqlite.db.run(`
+          db.run(`
             UPDATE hosts
             SET idHistory = ?
             WHERE id = ?
@@ -314,7 +334,7 @@ contextBridge.exposeInMainWorld('sslCertAPI', {
           ]);
         }
       } else {
-        sqlite.db.run(`
+        db.run(`
           UPDATE hosts_history
           SET ts = CURRENT_TIMESTAMP
           WHERE id = ?
@@ -323,12 +343,8 @@ contextBridge.exposeInMainWorld('sslCertAPI', {
         ]);
       }
 
-      writeFileSync(sqlite.filePath, Buffer.from(sqlite.db.export()));
-
-      return Promise.resolve();
-    } catch (err) {
-      return Promise.reject(err);
-    }
+      writeFileSync(sqlite.filePath, Buffer.from(db.export()));
+    });
   },
 
   verifyHost(host) {

@@ -1,5 +1,5 @@
 <template>
-  <q-card class="shadow-4">
+  <q-card flat square bordered>
     <q-card-section horizontal>
       <q-card-actions vertical>
         <q-checkbox
@@ -11,44 +11,49 @@
         />
       </q-card-actions>
 
-      <q-separator vertical inset />
+      <q-separator vertical />
 
       <q-card-actions vertical>
-        <q-btn
-          flat
-          size="lg"
-          padding="xs"
-          color="accent"
-          icon="policy"
-          :loading="processing || locked"
-          :disable="host.active !== 1"
-          @click="verifyHost"
-        >
-          <q-badge
-            v-if="host.historyLength > 0"
-            style="margin: 3px"
-            floating
-            color="secondary"
-            transparent
-            :label="host.historyLength"
-          />
-        </q-btn>
-
-        <template v-if="host.historyLength > 1">
-          <q-separator spaced />
-
+        <div>
           <q-btn
             flat
             size="lg"
             padding="xs"
-            :color="showHistory ? 'accent' : 'secondary'"
-            :icon="showHistory ? 'history' : 'history_toggle_off'"
-            @click="showHistory = showHistory !== true"
+            :color="host.active === 1 ? 'accent' : 'primary'"
+            icon="policy"
+            :loading="processing || locked"
+            :disable="host.active !== 1"
+            @click="verifyHost"
           />
+          <q-tooltip>{{ $t('host.tooltip_validate') }}</q-tooltip>
+        </div>
+
+        <template v-if="host.historyLength > 1">
+          <q-separator spaced />
+
+          <div>
+            <q-btn
+              flat
+              size="lg"
+              padding="xs"
+              color="primary"
+              :icon="showHistory ? 'history' : 'history_toggle_off'"
+              @click="showHistory = showHistory !== true"
+            >
+              <q-badge
+                style="margin: 3px"
+                floating
+                color="secondary"
+                transparent
+                :label="host.historyLength"
+              />
+            </q-btn>
+            <q-tooltip>{{ $t(`host.tooltip_history_${ showHistory ? 'hide' : 'show' }`) }}</q-tooltip>
+          </div>
         </template>
       </q-card-actions>
 
-      <q-separator vertical inset />
+      <q-separator vertical />
 
       <q-card-section class="col q-gutter-y-sm">
         <div class="row items-center q-gutter-x-sm">
@@ -58,7 +63,7 @@
 
           <q-badge
             v-if="host.category"
-            class="q-py-none"
+            class="q-py-none no-border-radius"
             color="secondary"
             outline
           >
@@ -70,7 +75,7 @@
           <q-space />
 
           <q-badge
-            class="q-py-none"
+            class="q-py-none no-border-radius"
             color="dark"
             outline
           >
@@ -84,8 +89,8 @@
           </q-badge>
         </div>
 
-        <div class="q-mt-none row no-wrap items-center">
-          <q-separator class="col q-my-lg bg-grey-3" />
+        <div class="q-mt-none row no-wrap items-center" style="margin-left: -16px; margin-right: -16px">
+          <q-separator class="col q-my-lg" />
 
           <q-chip
             square
@@ -95,15 +100,18 @@
             <q-avatar
               font-size="24px"
               text-color="white"
-              v-bind="authorizedIconProps"
-            />
+              v-bind="authorizedStateProps.avatar"
+            >
+              <q-tooltip>{{ authorizedStateProps.tooltip }}</q-tooltip>
+            </q-avatar>
 
-            <div class="q-pl-sm" :class="authorizedTimeColor">
+            <div class="q-pl-sm" :class="authorizedTimeProps.class">
               {{ host.ts || 'N/A' }}
+              <q-tooltip v-if="authorizedTimeProps.tooltip">{{ authorizedTimeProps.tooltip }}</q-tooltip>
             </div>
           </q-chip>
 
-          <q-separator class="col q-my-lg bg-grey-3" />
+          <q-separator class="col q-my-lg" />
         </div>
 
         <history-item v-if="host.ts" :history="host" />
@@ -118,43 +126,83 @@
         </template>
       </q-card-section>
 
-      <q-separator vertical inset />
+      <q-separator vertical />
 
       <q-card-actions vertical>
         <template v-if="host.active === 1">
-          <q-btn
-            flat
-            size="lg"
-            padding="xs"
-            color="primary"
-            icon="edit"
-            :disable="processing || locked"
-            @click="editHost"
-          />
+          <div>
+            <q-btn
+              flat
+              size="lg"
+              padding="xs"
+              color="primary"
+              icon="edit"
+              :disable="processing || locked"
+              @click="editHost"
+            />
+            <q-tooltip>{{ $t('host.tooltip_edit') }}</q-tooltip>
+          </div>
 
           <q-separator spaced />
 
-          <q-btn
-            flat
-            size="lg"
-            padding="xs"
-            color="negative"
-            icon="archive"
-            :disable="processing || locked"
-            @click="archiveHost"
-          />
+          <div v-if="host.historyLength > 0">
+            <q-btn
+              flat
+              size="lg"
+              padding="xs"
+              color="negative"
+              icon="archive"
+              :disable="processing || locked"
+              @click="archiveHost"
+            />
+            <q-tooltip>{{ $t('host.tooltip_archive') }}</q-tooltip>
+          </div>
+
+          <div v-else>
+            <q-btn
+              flat
+              size="lg"
+              padding="xs"
+              color="negative"
+              icon="delete"
+              :disable="processing || locked"
+              @click="deleteHost"
+            />
+            <q-tooltip>{{ $t('host.tooltip_delete') }}</q-tooltip>
+          </div>
         </template>
 
-        <q-btn
-          v-else
-          flat
-          size="lg"
-          padding="xs"
-          color="positive"
-          icon="unarchive"
-          :disable="processing || locked"
-          @click="unarchiveHost"
-        />
+        <template v-else>
+          <div>
+            <q-btn
+              flat
+              size="lg"
+              padding="xs"
+              color="positive"
+              icon="unarchive"
+              :disable="processing || locked"
+              @click="unarchiveHost"
+            />
+            <q-tooltip>{{ $t('host.tooltip_unarchive') }}</q-tooltip>
+          </div>
+
+          <template v-if="host.historyLength === 0">
+            <q-separator spaced />
+
+            <div>
+              <q-btn
+                flat
+                size="lg"
+                padding="xs"
+                color="negative"
+                icon="delete"
+                :disable="processing || locked"
+                @click="deleteHost"
+              />
+              <q-tooltip>{{ $t('host.tooltip_delete') }}</q-tooltip>
+            </div>
+          </template>
+        </template>
       </q-card-actions>
     </q-card-section>
   </q-card>
@@ -193,28 +241,40 @@ export default {
   },
 
   computed: {
-    authorizedIconProps() {
+    authorizedStateProps() {
       if (this.host.authorized === null) {
         return {
-          icon: 'gpp_maybe',
-          color: 'grey-6',
+          avatar: {
+            icon: 'gpp_maybe',
+            color: 'grey-6',
+          },
+          tooltip: this.$t('certificate.not_checked'),
         };
       }
 
       return this.host.authorized === 0
         ? {
-          icon: 'gpp_bad',
-          color: 'negative',
+          avatar: {
+            icon: 'gpp_bad',
+            color: 'negative',
+          },
+          tooltip: this.$t('certificate.invalid'),
         }
         : {
-          icon: 'gpp_good',
-          color: 'positive',
+          avatar: {
+            icon: 'gpp_good',
+            color: 'positive',
+          },
+          tooltip: this.$t('certificate.valid'),
         };
     },
 
-    authorizedTimeColor() {
+    authorizedTimeProps() {
       if (!this.host.ts || Number.isNaN((new Date(this.host.ts)).valueOf())) {
-        return 'text-grey-6';
+        return {
+          class: 'text-grey-6',
+          tooltip: this.$t('certificate.not_checked'),
+        };
       }
 
       const now = Date.now();
@@ -223,11 +283,20 @@ export default {
 
       // eslint-disable-next-line no-nested-ternary
       return daysOld > verificationDaysError
-        ? 'text-negative'
+        ? {
+          class: 'text-negative',
+          tooltip: this.$t('certificate.tooltip_checked_long_ago'),
+        }
         : (
           daysOld > verificationDaysWarning
-            ? 'text-warning'
-            : 'text-positive'
+            ? {
+              class: 'text-warning',
+              tooltip: this.$t('certificate.tooltip_checked_not_recently'),
+            }
+            : {
+              class: 'text-positive',
+              tooltip: this.$t('certificate.tooltip_checked_recently'),
+            }
         );
     },
   },
@@ -268,6 +337,30 @@ export default {
         .onOk(() => {
           this.readHosts();
         });
+    },
+
+    deleteHost() {
+      this.$q
+        .dialog({
+          title: this.$t('host.title_delete'),
+          ok: {
+            label: this.$t('host.btn_delete'),
+            color: 'negative',
+          },
+          cancel: {
+            label: this.$t('host.btn_cancel'),
+            color: 'secondary',
+            flat: true,
+          },
+          focus: 'cancel',
+        })
+        .onOk(() => window.sslCertAPI
+          .deleteHost({
+            id: this.host.id,
+          })
+          .then(() => {
+            this.readHosts();
+          }));
     },
 
     archiveHost() {

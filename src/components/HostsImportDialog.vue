@@ -93,7 +93,7 @@
 
 <script>
 export default {
-  name: 'HostEditDialog',
+  name: 'HostsImportDialog',
 
   props: {
     host: Object,

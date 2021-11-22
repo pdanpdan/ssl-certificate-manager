@@ -33,6 +33,7 @@ function createWindow() {
     y: 0,
     useContentSize: true,
     autoHideMenuBar: true,
+    icon: pathResolve(__dirname, 'icons', 'icon.png'),
     webPreferences: {
       contextIsolation: true,
       enableRemoteModule: true,

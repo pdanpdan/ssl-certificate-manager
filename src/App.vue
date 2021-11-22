@@ -1,7 +1,7 @@
 <template>
   <q-layout view="hHh lpR fFf">
-    <q-header>
-      <q-toolbar class="bg-dark">
+    <q-header class="bg-primary">
+      <q-toolbar>
         <q-toolbar-title>
           {{ appName }}
         </q-toolbar-title>
@@ -12,8 +12,8 @@
       <router-view />
     </q-page-container>
 
-    <q-footer>
-      <div class="row no-wrap items-center q-px-md q-py-xs bg-dark">
+    <q-footer class="bg-primary">
+      <div class="row no-wrap items-center q-px-md q-py-xs">
         <div class="text-caption">
           {{ appAuthor }}
         </div>
@@ -40,7 +40,7 @@ export default {
     };
   },
 
-  mounted() {
+  created() {
     window.sslCertAPI
       .openDb()
       .catch((err) => {

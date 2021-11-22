@@ -1,8 +1,10 @@
-import { app, BrowserWindow, nativeTheme } from 'electron';
 import {
-  initialize as electronRemoteInitialize,
-  enable as electronRemoteEnable,
-} from '@electron/remote/main';
+  app,
+  BrowserWindow,
+  nativeTheme,
+  screen,
+} from 'electron';
+import { initialize as electronRemoteInitialize, enable as electronRemoteEnable } from '@electron/remote/main';
 import { unlinkSync } from 'fs';
 import { join as pathJoin, resolve as pathResolve } from 'path';
 
@@ -19,16 +21,22 @@ try {
 let mainWindow;
 
 function createWindow() {
+  const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+
   /**
    * Initial window options
    */
   mainWindow = new BrowserWindow({
-    width: 1000,
-    height: 600,
+    width,
+    height: Math.floor(height / 2),
+    x: 0,
+    y: 0,
     useContentSize: true,
+    autoHideMenuBar: true,
     webPreferences: {
       contextIsolation: true,
       enableRemoteModule: true,
+      devTools: process.env.DEBUGGING,
       // More info: /quasar-cli/developing-electron-apps/electron-preload-script
       preload: pathResolve(__dirname, process.env.QUASAR_ELECTRON_PRELOAD),
     },

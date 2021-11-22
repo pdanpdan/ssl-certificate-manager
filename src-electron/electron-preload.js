@@ -1,17 +1,11 @@
 import { contextBridge } from 'electron';
 import { app } from '@electron/remote';
+import { resolve as pathResolve } from 'path';
+import { readFileSync, writeFileSync } from 'fs';
+import * as initSqlJs from 'sql.js';
 import * as tls from 'tls';
 
 import isDeepEqual from '../src/utils/isDeepEqual.js';
-
-const {
-  resolve: pathResolve,
-} = require('path');
-const {
-  readFileSync,
-  writeFileSync,
-} = require('fs');
-const initSqlJs = require('sql.js');
 
 const sqlite = {};
 

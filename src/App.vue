@@ -9,14 +9,12 @@
 </template>
 
 <script>
-const appVersion = require('../package.json').version;
-
 export default {
   name: 'App',
 
   data() {
     return {
-      appVersion,
+      appVersion: process.env.appVersion,
     };
   },
 

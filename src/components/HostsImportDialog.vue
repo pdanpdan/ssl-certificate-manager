@@ -2,7 +2,7 @@
   <q-dialog ref="dialog" persistent @hide="onDialogHide">
     <div class="q-dialog-plugin no-border-radius">
       <q-form @submit="onOkClick">
-        <q-card flat square>
+        <q-card square>
           <q-card-section class="bg-primary text-white" horizontal>
             <q-card-section class="col">
               <div class="text-subtitle1">

@@ -42,7 +42,7 @@
               <q-badge
                 style="margin: 3px"
                 floating
-                color="secondary"
+                color="info"
                 transparent
                 :label="host.historyLength"
               />
@@ -62,8 +62,8 @@
 
           <q-badge
             v-if="host.category"
-            class="q-py-none no-border-radius"
-            color="secondary"
+            class="q-py-none no-border-radius text-subtitle1"
+            color="dark"
             outline
           >
             <q-icon class="q-mr-xs" size="20px" name="tag" />
@@ -74,7 +74,7 @@
           <q-space />
 
           <q-badge
-            class="q-py-none no-border-radius"
+            class="q-py-none no-border-radius text-subtitle1"
             color="dark"
             outline
           >
@@ -149,7 +149,7 @@
               flat
               size="lg"
               padding="xs"
-              color="negative"
+              color="warning"
               icon="archive"
               :disable="processing || locked"
               @click="archiveHost"
@@ -213,6 +213,7 @@ import { mapActions } from 'vuex';
 import HostEdit from 'components/HostEditDialog.vue';
 import HistoryItem from 'components/HistoryItem.vue';
 import { durationDay, verificationDaysError, verificationDaysWarning } from '../store/config.js';
+import { getFullHostName } from '../store/hosts/state.js';
 
 export default {
   name: 'HostItemComponent',
@@ -300,19 +301,7 @@ export default {
     },
 
     computedHostName() {
-      let name = '';
-
-      if (this.host.description && this.host.description !== this.host.hostname) {
-        name = `${ this.host.description } - `;
-      }
-
-      name += `${ this.host.hostname }:${ this.host.port }`;
-
-      if (this.host.servername && this.host.servername !== this.host.hostname) {
-        name += ` / ${ this.host.servername }`;
-      }
-
-      return name;
+      return getFullHostName(this.host);
     },
   },
 
@@ -387,7 +376,7 @@ export default {
           message: this.computedHostName,
           ok: {
             label: this.$t('host.btn_archive'),
-            color: 'negative',
+            color: 'warning',
             unelevated: true,
           },
           cancel: {

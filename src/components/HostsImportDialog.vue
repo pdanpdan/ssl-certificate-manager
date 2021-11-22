@@ -1,12 +1,17 @@
 <template>
-  <q-dialog ref="dialog" persistent @hide="onDialogHide">
-    <div class="q-dialog-plugin no-border-radius">
-      <q-form @submit="onOkClick">
-        <q-card square>
-          <q-card-section class="bg-primary text-white" horizontal>
+  <q-dialog
+    ref="dialog"
+    maximized
+    persistent
+    @hide="onDialogHide"
+  >
+    <div class="q-dialog-plugin no-border-radius column no-wrap" style="max-width: 80vw; max-height: 80vh">
+      <q-form class="col column no-wrap" @submit="onOkClick">
+        <q-card class="col column no-wrap" square>
+          <q-card-section class="bg-primary text-white q-mb-md" horizontal>
             <q-card-section class="col">
               <div class="text-subtitle1">
-                {{ titleCard }}
+                {{ $t('import.title_import') }}
               </div>
             </q-card-section>
 
@@ -23,53 +28,65 @@
             </q-card-actions>
           </q-card-section>
 
-          <q-card-section class="column no-wrap q-gutter-y-sm q-mt-md">
+          <q-card-section class="col column scroll">
             <q-input
-              :model-value="hostname"
+              class="col"
+              v-model="source"
+              autogrow
               outlined
               square
               color="primary"
-              required
               autofocus
-              hide-bottom-space
-              :rules="requiredRules"
-              :label="`${ $t('host.label_hostname') } *`"
-              @update:model-value="onHostnameChange"
+              :label="$t('import.label_source')"
+              :hint="$t('import.hint_source')"
             />
+          </q-card-section>
 
-            <q-input
-              v-model="category"
+          <q-card-section v-if="rows.length > 0" class="col column q-gutter-y-sm">
+            <div class="row no-wrap items-center q-col-gutter-x-sm">
+              <q-input
+                v-for="(column, i) in columnNames"
+                :key="i"
+                class="col"
+                v-model.number="columns[column]"
+                type="number"
+                dense
+                outlined
+                square
+                color="primary"
+                input-class="text-right"
+                :min="0"
+                :max="columnNames.length - 1"
+                :step="1"
+                :label="$t('import.label_column_nr_for', { column })"
+                stack-label
+              />
+            </div>
+
+            <q-field
+              class="col"
               outlined
               square
+              readonly
               color="primary"
-              :label="$t('host.label_category')"
-            />
-
-            <q-input
-              v-model="port"
-              outlined
-              square
-              color="primary"
-              required
-              :label="$t('host.label_port')"
-            />
-
-            <q-input
-              v-model="servername"
-              outlined
-              square
-              color="primary"
-              :label="$t('host.label_servername')"
-              :readonly="hasHistory"
-            />
-
-            <q-input
-              v-model="description"
-              outlined
-              square
-              color="primary"
-              :label="$t('host.label_description')"
-            />
+              :label="$t('import.label_processed')"
+              stack-label
+            >
+              <q-scroll-area class="col q-mb-xs">
+                <q-markup-table class="q-pr-md" flat square>
+                  <thead>
+                    <tr>
+                      <th v-for="(column, i) in columnNames" :key="i" class="text-uppercase">{{ column }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(row, j) in rows" :key="j">
+                      <td v-for="(column, i) in columnNames" :key="i">{{ row[column] }}</td>
+                    </tr>
+                  </tbody>
+                </q-markup-table>
+              </q-scroll-area>
+            </q-field>
           </q-card-section>
 
           <q-card-actions align="between">
@@ -97,12 +114,12 @@
 </template>
 
 <script>
+import { parse as csvParse } from 'csv-parse/sync';
+
+import { getFullHostName } from '../store/hosts/state.js';
+
 export default {
   name: 'HostsImportDialog',
-
-  props: {
-    host: Object,
-  },
 
   emits: ['ok', 'hide'],
 
@@ -110,35 +127,60 @@ export default {
     return {
       processing: false,
 
-      id: undefined,
-      hostname: '',
-      servername: '',
-      port: 443,
-      description: '',
-      category: '',
-      active: 1,
+      source: '',
+      parsed: [],
 
-      ...this.host,
+      columns: {
+        hostname: 0,
+        port: 1,
+        servername: 2,
+        description: 3,
+        category: 4,
+      },
     };
   },
 
   computed: {
-    titleCard() {
-      return this.id === undefined ? this.$t('host.title_add') : this.$t('host.title_update');
-    },
-
     labelBtnOk() {
-      return this.id === undefined ? this.$t('host.btn_add') : this.$t('host.btn_update');
+      return this.rows.length > 0 ? this.$t('import.btn_import') : this.$t('import.btn_process');
     },
 
-    requiredRules() {
-      return [
-        (val) => (typeof val === 'string' && val.trim().length > 0) || this.$t('validation.required'),
-      ];
+    columnNames() {
+      return Object.keys(this.columns);
     },
 
-    hasHistory() {
-      return this.host === Object(this.host) && this.host.historyLength > 0;
+    importedKeys() {
+      return this.$store.state.hosts.hosts.map((host) => this.columnNames.map((column) => host[column]).join('#'));
+    },
+
+    rows() {
+      const rows = this.parsed
+        .map((row) => this.columnNames
+          .reduce((acc, column) => ({
+            ...acc,
+            [column]: row[this.columns[column]],
+          }), {}))
+        .filter((row) => typeof row.hostname === 'string' && row.hostname.trim().length > 0)
+        .map((row) => ({
+          ...row,
+          port: row.port || 443,
+          servername: row.servername || row.hostname,
+          description: row.description || row.hostname,
+        }))
+        .map((row) => ({
+          ...row,
+          key: this.columnNames.map((column) => row[column]).join('#'),
+        }));
+
+      return rows.filter((row, i) => rows.slice(i + 1).findIndex((r) => r.key === row.key) === -1);
+    },
+  },
+
+  watch: {
+    source() {
+      if (this.parsed.length > 0) {
+        this.parsed = [];
+      }
     },
   },
 
@@ -156,68 +198,75 @@ export default {
     },
 
     onOkClick() {
-      if (
-        this.processing === true
-        || typeof this.hostname !== 'string'
-        || this.hostname.trim().length === 0
-      ) {
+      if (this.rows.length > 0) {
+        this.importRows();
+      } else {
+        this.processRows();
+      }
+    },
+
+    processRows() {
+      this.parsed = csvParse(this.source, {
+        delimiter: [';', ','],
+        relax: true,
+        relax_column_count: true,
+        skip_empty_lines: true,
+        skip_lines_with_empty_values: true,
+        trim: true,
+      });
+    },
+
+    importRows() {
+      if (this.processing === true || this.rows.length === 0) {
         return;
       }
 
-      const host = {
-        id: this.id,
-        hostname: this.hostname,
-        servername: this.servername || this.hostname,
-        port: this.port || 443,
-        description: this.description || this.hostname,
-        category: this.category,
-        active: this.active,
-      };
-
       this.processing = true;
 
-      window.sslCertAPI
-        .writeHost(host)
-        .then(() => {
-          this.$q.notify({
-            type: 'positive',
-            message: this.$t(`host.msg_${ this.id === undefined ? 'add' : 'update' }`, { hostname: this.hostname }),
-          });
+      const q = this.rows
+        .filter((row) => this.importedKeys.includes(row.key) !== true)
+        .reduce((acc, row) => acc
+          .then(() => {
+            const host = {
+              ...row,
+              active: 1,
+            };
 
+            const hostname = getFullHostName(row);
+
+            return window.sslCertAPI
+              .writeHost(host)
+              .then(() => {
+                this.$q.notify({
+                  type: 'positive',
+                  message: this.$t('host.msg_add', { hostname }),
+                });
+              })
+              .catch((error) => {
+                console.error(error);
+
+                this.$q.notify({
+                  type: 'negative',
+                  message: this.$t('host.msg_add_error', { hostname, error }),
+                });
+              });
+          })
+          .catch(() => {}), Promise.resolve());
+
+      q
+        .then(() => {
           this.processing = false;
 
-          this.$emit('ok', { host });
+          this.$emit('ok');
           this.hide();
         })
-        .catch((error) => {
-          console.error(error);
-
-          this.$q.notify({
-            type: 'negative',
-            message: this.$t(`host.msg_${ this.id === undefined ? 'add' : 'update' }_error`, { hostname: this.hostname, error }),
-          });
-
+        .catch(() => {
           this.processing = false;
         });
     },
 
     onCancelClick() {
       this.hide();
-    },
-
-    onHostnameChange(value) {
-      if (
-        this.hasHistory !== true
-        && (typeof this.servername !== 'string' || this.servername.trim().length === 0 || this.servername === this.hostname)
-      ) {
-        this.servername = value;
-      }
-
-      if (typeof this.description !== 'string' || this.description.trim().length === 0 || this.description === this.hostname) {
-        this.description = value;
-      }
-
-      this.hostname = value;
     },
   },
 };

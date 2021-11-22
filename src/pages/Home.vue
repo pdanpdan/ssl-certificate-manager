@@ -107,6 +107,14 @@
                 color="primary"
                 :label="$t('host.filter_authorized_expire')"
               />
+
+              <q-space />
+
+              <q-badge
+                class="q-py-xs q-px-sm no-border-radius text-subtitle2"
+                color="info"
+                :label="filterStats"
+              />
             </div>
 
             <q-input
@@ -194,6 +202,8 @@ import { defineComponent } from 'vue';
 import { mapState, mapActions, mapGetters } from 'vuex';
 
 import HostEditDialog from 'components/HostEditDialog.vue';
+import HostsImportDialog from 'components/HostsImportDialog.vue';
+import HostsExportDialog from 'components/HostsExportDialog.vue';
 import HostItem from 'components/HostItem.vue';
 
 export default defineComponent({
@@ -236,6 +246,14 @@ export default defineComponent({
           return acc;
         }, {});
     },
+
+    filterStats() {
+      return this.$t('host.filter_stats', {
+        selected: this.filteredSelectedHosts.length,
+        filtered: this.filteredHosts.length,
+        total: this.hosts.length,
+      });
+    },
   },
 
   watch: {
@@ -265,7 +283,7 @@ export default defineComponent({
     importHosts() {
       this.$q
         .dialog({
-          component: HostEditDialog,
+          component: HostsImportDialog,
         })
         .onOk(() => {
           this.readHosts();
@@ -275,7 +293,7 @@ export default defineComponent({
     exportHosts() {
       this.$q
         .dialog({
-          component: HostEditDialog,
+          component: HostsExportDialog,
         });
     },
 

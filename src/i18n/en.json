@@ -43,6 +43,7 @@
     "filter_authorized_not_checked": "Show not checked",
     "filter_authorized_valid": "Show valid",
     "filter_search": "Search by category, description or hostname",
+    "filter_stats": "{selected} selected / {filtered} displayed / {total} total",
     "label_category": "Category",
     "label_description": "Description",
     "label_hostname": "Host name",
@@ -69,6 +70,15 @@
     "tooltip_unselect_all": "Unselect all visible hosts",
     "tooltip_validate": "Validate host",
     "tooltip_validate_selected": "Validate all selected hosts"
+  },
+  "import": {
+    "btn_import": "Import hosts",
+    "btn_process": "Parse CSV",
+    "hint_source": "CSV with columns 'host name' (mandatory), 'port', 'server name', 'description', and 'category' - delimited by ';' or ',",
+    "label_column_nr_for": "Column number for column '{column}' (0 based)",
+    "label_processed": "Found hosts",
+    "label_source": "Source CSV text",
+    "title_import": "Import hosts from CSV"
   },
   "validation": {
     "required": "Field is required"

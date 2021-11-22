@@ -3,7 +3,7 @@
     <div class="q-dialog-plugin no-border-radius">
       <q-form @submit="onOkClick">
         <q-card square>
-          <q-card-section class="bg-primary text-white q-mb-md" horizontal>
+          <q-card-section class="bg-primary text-white" horizontal>
             <q-card-section class="col">
               <div class="text-subtitle1">
                 {{ titleCard }}
@@ -23,7 +23,7 @@
             </q-card-actions>
           </q-card-section>
 
-          <q-card-section class="column no-wrap q-gutter-y-sm">
+          <q-card-section class="column no-wrap q-gutter-y-sm q-mt-md">
             <q-input
               :model-value="hostname"
               outlined
@@ -98,7 +98,7 @@
 
 <script>
 export default {
-  name: 'HostEditDialog',
+  name: 'HostsExportDialog',
 
   props: {
     host: Object,

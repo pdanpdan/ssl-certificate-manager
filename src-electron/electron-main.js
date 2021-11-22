@@ -27,10 +27,19 @@ function createWindow() {
    * Initial window options
    */
   mainWindow = new BrowserWindow({
-    width,
-    height: Math.floor(height / 2),
-    x: 0,
-    y: 0,
+    ...(
+      process.env.DEBUGGING
+        ? {
+          width,
+          height: Math.floor(height / 2),
+          x: 0,
+          y: 0,
+        }
+        : {
+          width: 800,
+          height: 600,
+        }
+    ),
     useContentSize: true,
     autoHideMenuBar: true,
     icon: pathResolve(__dirname, 'icons', 'icon.png'),

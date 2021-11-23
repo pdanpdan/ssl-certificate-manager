@@ -199,7 +199,7 @@
          :class="{ 'q-mt-lg': filters.viewDetailed !== true }"
         :items="filteredHosts"
         scroll-target="#hosts-scroll-area > q-scrollarea__container"
-        :virtual-scroll-item-size="filters.viewDetailed ? 400 : 100"
+        :virtual-scroll-item-size="filters.viewDetailed ? 400 : 56"
       >
         <template v-slot="{ item: host, index }">
           <host-item
@@ -332,7 +332,10 @@ export default defineComponent({
             () => window.sslCertAPI
               .verifyHost(host)
               .then((history) => window.sslCertAPI.writeHostHistory(host, history))
-              .catch(() => {}),
+              .catch(() => {})
+              .then(() => {
+                this.processing = this.processing.filter((h) => h.id !== host.id);
+              }),
           ),
           Promise.resolve(),
         ).then(() => {

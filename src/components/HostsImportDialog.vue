@@ -61,13 +61,13 @@
                 >
                   <thead>
                     <tr>
-                      <th v-for="column in parsedColumnsLength" :key="column" class="text-uppercase">{{ $t('import.label_column_nr', { column }) }}</th>
+                      <th v-for="colNr in parsedColumnsLength" :key="colNr">{{ $t('import.label_column_nr', { colNr }) }}</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr v-for="(row, j) in parsed" :key="j">
-                      <td v-for="column in parsedColumnsLength" :key="column">
-                        <span :class="{ 'text-grey-3': !row[column - 1] }">{{ row[column - 1] || 'N/A' }}</span>
+                      <td v-for="colNr in parsedColumnsLength" :key="colNr">
+                        <span :class="{ 'text-grey-3': !row[colNr - 1] }">{{ row[colNr - 1] || 'N/A' }}</span>
                       </td>
                     </tr>
                   </tbody>
@@ -95,13 +95,13 @@
                 >
                   <thead>
                     <tr>
-                      <th v-for="(column, i) in columnNames" :key="i">
+                      <th v-for="(colName, i) in columnNames" :key="i">
                         <div class="row no-wrap items-center q-gutter-x-sm">
-                          <div class="text-uppercase">{{ column }}</div>
+                          <div>{{ colName }}</div>
 
                           <input
-                            class="import__column-input"
-                            v-model.number="columns[column]"
+                            class="import-table__column-input"
+                            v-model.number="columns[colName]"
                             type="number"
                             :min="1"
                             :max="parsedColumnsLength"
@@ -113,7 +113,7 @@
                   </thead>
                   <tbody>
                     <tr v-for="(row, j) in rows" :key="j">
-                      <td v-for="(column, i) in columnNames" :key="i">{{ row[column] }}</td>
+                      <td v-for="(colName, i) in columnNames" :key="i">{{ row[colName] }}</td>
                     </tr>
                   </tbody>
                 </q-markup-table>
@@ -126,7 +126,7 @@
               flat
               color="secondary"
               padding="sm md"
-              :label="$t('host.btn_cancel')"
+              :label="$t('import.btn_cancel')"
               :disable="processing"
               @click="onCancelClick"
             />
@@ -179,7 +179,7 @@ export default {
     },
 
     importedKeys() {
-      return this.$store.state.hosts.hosts.map((host) => this.columnNames.map((column) => host[column]).join('#'));
+      return this.$store.state.hosts.hosts.map((host) => this.columnNames.map((colName) => host[colName]).join('#'));
     },
 
     parsedColumnsLength() {
@@ -189,9 +189,9 @@ export default {
     rows() {
       const rows = this.parsed
         .map((row) => this.columnNames
-          .reduce((acc, column) => ({
+          .reduce((acc, colName) => ({
             ...acc,
-            [column]: row[(this.columns[column] - 1) || 0],
+            [colName]: row[(this.columns[colName] - 1) || 0],
           }), {}))
         .filter((row) => typeof row.hostname === 'string' && row.hostname.trim().length > 0)
         .map((row) => ({
@@ -202,7 +202,7 @@ export default {
         }))
         .map((row) => ({
           ...row,
-          key: this.columnNames.map((column) => row[column]).join('#'),
+          key: this.columnNames.map((colName) => row[colName]).join('#'),
         }));
 
       return rows.filter((row, i) => rows.slice(i + 1).findIndex((r) => r.key === row.key) === -1);
@@ -211,11 +211,7 @@ export default {
 
   watch: {
     source() {
-      if (this.parsed.length > 0) {
-        this.parsed = [];
-      } else {
-        this.processRows();
-      }
+      this.processRows();
     },
   },
 

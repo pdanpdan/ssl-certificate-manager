@@ -32,6 +32,12 @@
     "btn_back": "Go back",
     "message": "Sorry, nothing here..."
   },
+  "export": {
+    "btn_cancel": "Cancel",
+    "btn_export": "Export hosts",
+    "label_hosts": "Hosts - columns to export",
+    "title_export": "Export hosts to CSV"
+  },
   "host": {
     "btn_add": "Add host",
     "btn_archive": "Archive host",
@@ -73,6 +79,7 @@
     "tooltip_validate_selected": "Validate all selected hosts"
   },
   "import": {
+    "btn_cancel": "Cancel",
     "btn_import": "Import hosts",
     "hint_source": "CSV with columns 'host name' (mandatory), 'port', 'server name', 'description', and 'category' - delimited by ';' or ',",
     "label_column_nr": "Column #{column}",

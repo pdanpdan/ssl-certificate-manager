@@ -1,12 +1,17 @@
 <template>
-  <q-dialog ref="dialog" persistent @hide="onDialogHide">
-    <div class="q-dialog-plugin">
-      <q-form @submit="onOkClick">
-        <q-card square>
-          <q-card-section class="bg-primary text-white" horizontal>
+  <q-dialog
+    ref="dialog"
+    maximized
+    persistent
+    @hide="onDialogHide"
+  >
+    <div class="q-dialog-plugin column no-wrap" style="max-width: 80vw; max-height: 80vh">
+      <q-form class="col column no-wrap" @submit="onOkClick">
+        <q-card class="col column no-wrap" square>
+          <q-card-section class="bg-primary text-white q-mb-md" horizontal>
             <q-card-section class="col">
               <div class="text-subtitle1">
-                {{ titleCard }}
+                {{ $t('export.title_export') }}
               </div>
             </q-card-section>
 
@@ -23,53 +28,51 @@
             </q-card-actions>
           </q-card-section>
 
-          <q-card-section class="column no-wrap q-gutter-y-sm q-mt-md">
-            <q-input
-              :model-value="hostname"
+          <q-card-section class="col column">
+            <q-field
+              class="col"
               outlined
               square
+              readonly
               color="primary"
-              required
-              autofocus
-              hide-bottom-space
-              :rules="requiredRules"
-              :label="`${ $t('host.label_hostname') } *`"
-              @update:model-value="onHostnameChange"
-            />
+              :label="$t('export.label_hosts')"
+              stack-label
+            >
+              <q-scroll-area class="col q-mb-xs">
+                <q-markup-table
+                  class="q-pr-md"
+                  flat
+                  square
+                  dense
+                >
+                  <thead>
+                    <tr>
+                      <th v-for="(colName, i) in columnNames" :key="i">
+                        <div class="row no-wrap items-center q-gutter-x-sm">
+                          <div>{{ colName }}</div>
 
-            <q-input
-              v-model="category"
-              outlined
-              square
-              color="primary"
-              :label="$t('host.label_category')"
-            />
-
-            <q-input
-              v-model="port"
-              outlined
-              square
-              color="primary"
-              required
-              :label="$t('host.label_port')"
-            />
-
-            <q-input
-              v-model="servername"
-              outlined
-              square
-              color="primary"
-              :label="$t('host.label_servername')"
-              :readonly="hasHistory"
-            />
-
-            <q-input
-              v-model="description"
-              outlined
-              square
-              color="primary"
-              :label="$t('host.label_description')"
-            />
+                          <q-checkbox
+                            v-model="columns[colName].export"
+                            dense
+                            color="primary"
+                          />
+                        </div>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(row, j) in source" :key="j">
+                      <td
+                        v-for="(colName, i) in columnNames"
+                        :key="i"
+                        class="export__column-content"
+                        :class="{ 'text-grey-5': columns[colName].export !== true }"
+                      >{{ row[colName] }}</td>
+                    </tr>
+                  </tbody>
+                </q-markup-table>
+              </q-scroll-area>
+            </q-field>
           </q-card-section>
 
           <q-card-actions align="between">
@@ -77,7 +80,7 @@
               flat
               color="secondary"
               padding="sm md"
-              :label="$t('host.btn_cancel')"
+              :label="$t('export.btn_cancel')"
               :disable="processing"
               @click="onCancelClick"
             />
@@ -86,7 +89,8 @@
               unelevated
               color="primary"
               padding="sm md"
-              :label="labelBtnOk"
+              :label="$t('export.btn_export')"
+              :disable="rows.length === 0"
               :loading="processing"
             />
           </q-card-actions>
@@ -97,12 +101,12 @@
 </template>
 
 <script>
+import { exportFile } from 'quasar';
+import { stringify as csvStringify } from 'csv-stringify/browser/esm/sync.js';
+import { mapGetters } from 'vuex';
+
 export default {
   name: 'HostsExportDialog',
-
-  props: {
-    host: Object,
-  },
 
   emits: ['ok', 'hide'],
 
@@ -110,35 +114,127 @@ export default {
     return {
       processing: false,
 
-      id: undefined,
-      hostname: '',
-      servername: '',
-      port: 443,
-      description: '',
-      category: '',
-      active: 1,
-
-      ...this.host,
+      columns: {
+        category: {
+          export: true,
+          extract: (row) => row.category,
+        },
+        hostname: {
+          export: true,
+          extract: (row) => row.hostname,
+        },
+        port: {
+          export: true,
+          extract: (row) => row.port,
+        },
+        servername: {
+          export: true,
+          extract: (row) => row.servername,
+        },
+        description: {
+          export: true,
+          extract: (row) => row.description,
+        },
+        archived: {
+          export: true,
+          extract: (row) => (row.active !== 1 ? 'TRUE' : 'FALSE'),
+        },
+        certificateValidationDate: {
+          export: true,
+          extract: (row) => (row.ts ? (new Date(row.ts)).toISOString() : null),
+        },
+        certificateValid: {
+          export: true,
+          extract: (row) => (row.authorized === 1 ? 'TRUE' : 'FALSE'),
+        },
+        certificateFingerprint: {
+          export: true,
+          extract: (row) => row.fingerprint,
+        },
+        certificatePreviousFingerprint: {
+          export: false,
+          extract: (row) => row.prevFingerprint,
+        },
+        certificateFingerprintChanged: {
+          export: true,
+          extract: (row) => (row.fingerprintChanged === 1 ? 'TRUE' : 'FALSE'),
+        },
+        certificateValidationErrors: {
+          export: true,
+          extract: (row) => row.errors.map((err) => `[${ err.type }] ${ err.code }`).join(' | '),
+        },
+        certificateSubject: {
+          export: true,
+          extract: (row) => (row.certificates.length === 0 ? null : row.certificates[0].subject.CN),
+        },
+        certificateSubjectAltName: {
+          export: true,
+          extract: (row) => (row.certificates.length === 0 ? null : row.certificates[0].subjectaltname),
+        },
+        certificateIssuer: {
+          export: true,
+          extract: (row) => (row.certificates.length === 0 ? null : row.certificates[0].issuer.CN),
+        },
+        certificateBits: {
+          export: true,
+          extract: (row) => (row.certificates.length === 0 ? null : row.certificates[0].bits),
+        },
+        certificateValidFrom: {
+          export: true,
+          // eslint-disable-next-line no-nested-ternary
+          extract: (row) => (row.certificates.length === 0 ? null : (row.certificates[0].valid_from ? (new Date(row.certificates[0].valid_from)).toISOString() : null)),
+        },
+        certificateValidTo: {
+          export: true,
+          // eslint-disable-next-line no-nested-ternary
+          extract: (row) => (row.certificates.length === 0 ? null : (row.certificates[0].valid_to ? (new Date(row.certificates[0].valid_to)).toISOString() : null)),
+        },
+        certificateSerialNumber: {
+          export: true,
+          extract: (row) => (row.certificates.length === 0 ? null : row.certificates[0].serialNumber),
+        },
+        certificateIssuersChain: {
+          export: true,
+          extract: (row) => row.certificates.map((cert, i) => `[${ i + 1 }] ${ cert.issuer.CN }`).join(' | '),
+        },
+        certificateValidationHistoryLength: {
+          export: true,
+          extract: (row) => row.historyLength,
+        },
+        certificatePubKey: {
+          export: false,
+          extract: (row) => (row.certificates.length === 0 ? null : row.certificates[0].pubkey),
+        },
+      },
     };
   },
 
   computed: {
-    titleCard() {
-      return this.id === undefined ? this.$t('host.title_add') : this.$t('host.title_update');
+    ...mapGetters('hosts', [
+      'filteredHosts',
+      'filteredSelectedHosts',
+    ]),
+
+    source() {
+      return (this.filteredSelectedHosts.length > 0 ? this.filteredSelectedHosts : this.filteredHosts)
+        .map((row) => this.columnNames.reduce((acc, colName) => ({
+          ...acc,
+          [colName]: this.columns[colName].extract(row),
+        }), {}));
     },
 
-    labelBtnOk() {
-      return this.id === undefined ? this.$t('host.btn_add') : this.$t('host.btn_update');
+    rows() {
+      const columnNames = this.columnNames.filter((colName) => this.columns[colName].export);
+
+      return this.source
+        .map((row) => columnNames.reduce((acc, colName) => ({
+          ...acc,
+          [colName]: row[colName],
+        }), {}));
     },
 
-    requiredRules() {
-      return [
-        (val) => (typeof val === 'string' && val.trim().length > 0) || this.$t('validation.required'),
-      ];
-    },
-
-    hasHistory() {
-      return this.host === Object(this.host) && this.host.historyLength > 0;
+    columnNames() {
+      return Object.keys(this.columns);
     },
   },
 
@@ -156,68 +252,30 @@ export default {
     },
 
     onOkClick() {
-      if (
-        this.processing === true
-        || typeof this.hostname !== 'string'
-        || this.hostname.trim().length === 0
-      ) {
+      if (this.processing === true || this.rows.length === 0) {
         return;
       }
 
-      const host = {
-        id: this.id,
-        hostname: this.hostname,
-        servername: this.servername || this.hostname,
-        port: this.port || 443,
-        description: this.description || this.hostname,
-        category: this.category,
-        active: this.active,
-      };
-
       this.processing = true;
 
-      window.sslCertAPI
-        .writeHost(host)
-        .then(() => {
-          this.$q.notify({
-            type: 'positive',
-            message: this.$t(`host.msg_${ this.id === undefined ? 'add' : 'update' }`, { hostname: this.hostname }),
-          });
+      const csv = csvStringify(this.rows, {
+        // columns: {},
+        delimiter: ';',
+        header: true,
+      });
 
-          this.processing = false;
+      exportFile(`ssl_cert_manager_hosts_${ Date.now() }.csv`, csv, {
+        encoding: 'utf-8',
+        mimeType: 'text/csv;charset=utf-8;',
+      });
 
-          this.$emit('ok', { host });
-          this.hide();
-        })
-        .catch((error) => {
-          console.error(error);
-
-          this.$q.notify({
-            type: 'negative',
-            message: this.$t(`host.msg_${ this.id === undefined ? 'add' : 'update' }_error`, { hostname: this.hostname, error }),
-          });
-
-          this.processing = false;
-        });
+      this.processing = false;
+      this.$emit('ok');
+      this.hide();
     },
 
     onCancelClick() {
       this.hide();
-    },
-
-    onHostnameChange(value) {
-      if (
-        this.hasHistory !== true
-        && (typeof this.servername !== 'string' || this.servername.trim().length === 0 || this.servername === this.hostname)
-      ) {
-        this.servername = value;
-      }
-
-      if (typeof this.description !== 'string' || this.description.trim().length === 0 || this.description === this.hostname) {
-        this.description = value;
-      }
-
-      this.hostname = value;
     },
   },
 };

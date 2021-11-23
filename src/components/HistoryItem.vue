@@ -25,18 +25,32 @@
   </div>
 
   <div class="q-gutter-y-sm">
-    <div class="row items-center q-gutter-x-sm">
-      <q-badge
-        v-if="history.fingerprint"
-        class="q-badge--history"
-        :color="history.fingerprintChanged === 1 ? 'warning' : 'dark'"
-        outline
-      >
-        <q-icon class="q-mr-xs" size="20px" name="fingerprint" />
+    <div class="row items-start q-gutter-x-sm">
+      <div class="column items-start q-gutter-y-sm">
+        <q-badge
+          v-if="history.fingerprint"
+          class="q-badge--history"
+          :color="history.fingerprintChanged === 1 ? 'warning' : 'dark'"
+          outline
+        >
+          <q-icon class="q-mr-xs" size="20px" name="fingerprint" />
 
-        {{ history.fingerprint }}
-        <q-tooltip v-if="history.fingerprintChanged === 1">{{ $t('certificate.tooltip_fingerprint_changed') }}</q-tooltip>
-      </q-badge>
+          {{ history.fingerprint }}
+          <q-tooltip v-if="history.fingerprintChanged === 1">{{ $t('certificate.tooltip_fingerprint_changed') }}</q-tooltip>
+        </q-badge>
+
+        <q-badge
+          v-if="history.fingerprintChanged"
+          class="q-badge--history"
+          color="info"
+          outline
+        >
+          <q-icon class="q-mr-xs" size="20px" name="fingerprint" />
+
+          {{ history.prevFingerprint }}
+          <q-tooltip>{{ $t('certificate.tooltip_fingerprint_prev') }}</q-tooltip>
+        </q-badge>
+      </div>
 
       <q-badge
         v-if="certificateData"

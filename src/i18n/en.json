@@ -23,6 +23,7 @@
     "tooltip_checked_not_recently": "Not checked recently",
     "tooltip_checked_recently": "Checked recently",
     "tooltip_fingerprint_changed": "Fingerprint changed from previous check",
+    "tooltip_fingerprint_prev": "Previous fingerprint",
     "valid": "Valid",
     "valid_from": "Valid from",
     "valid_to": "Valid to"

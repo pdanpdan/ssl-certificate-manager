@@ -44,6 +44,10 @@ const parseErrorsAndCertificates = (row) => {
     row.errors = [];
   }
 
+  row.fingerprintChanged = row.prevFingerprint && row.prevFingerprint !== row.fingerprint
+    ? 1
+    : 0;
+
   return row;
 };
 
@@ -121,7 +125,7 @@ contextBridge.exposeInMainWorld('sslCertAPI', {
 
             sqlite.db.run(`
               CREATE INDEX IF NOT EXISTS idx_hosts_history_idHost
-              ON hosts_history (idHost, ts);
+              ON hosts_history (idHost, ts DESC)
             `);
 
             sqlite.db.run('REPLACE INTO config (id, version) VALUES (1, ?)', [DB_VERSION]);
@@ -213,20 +217,18 @@ contextBridge.exposeInMainWorld('sslCertAPI', {
           hh.certificates,
           hh.errors,
           CASE
-            WHEN
-              hh.id IS NOT NULL
-              AND coalesce((
-                SELECT hh2.fingerprint
-                FROM hosts_history hh2
-                WHERE hh2.idHost = hh.idHost
-                  AND hh2.ts < hh.ts
-                  AND hh2.fingerprint IS NOT NULL
-                ORDER BY ts DESC
-                LIMIT 1
-              ), hh.fingerprint) != hh.fingerprint
-            THEN 1
-            ELSE 0
-          END AS fingerprintChanged,
+            WHEN hh.id IS NOT NULL
+            THEN (
+              SELECT hh2.fingerprint
+              FROM hosts_history hh2
+              WHERE hh2.idHost = hh.idHost
+                AND hh2.ts < hh.ts
+                AND hh2.fingerprint IS NOT NULL
+              ORDER BY ts DESC
+              LIMIT 1
+            )
+            ELSE NULL
+          END AS prevFingerprint,
           (SELECT count(*) FROM hosts_history hh2 WHERE hh2.idHost = hh.idHost) AS historyLength
         FROM hosts h
           LEFT JOIN hosts_history hh ON hh.id = h.idHistory
@@ -257,20 +259,15 @@ contextBridge.exposeInMainWorld('sslCertAPI', {
       const res = db.exec(`
         SELECT
           hh.*,
-          CASE
-            WHEN
-              coalesce((
-                SELECT hh2.fingerprint
-                FROM hosts_history hh2
-                WHERE hh2.idHost = hh.idHost
-                  AND hh2.ts < hh.ts
-                  AND hh2.fingerprint IS NOT NULL
-                ORDER BY ts DESC
-                LIMIT 1
-              ), hh.fingerprint) != hh.fingerprint
-            THEN 1
-            ELSE 0
-          END AS fingerprintChanged
+          (
+            SELECT hh2.fingerprint
+            FROM hosts_history hh2
+            WHERE hh2.idHost = hh.idHost
+              AND hh2.ts < hh.ts
+              AND hh2.fingerprint IS NOT NULL
+            ORDER BY ts DESC
+            LIMIT 1
+          ) AS prevFingerprint
         FROM hosts_history hh
         WHERE idHost = ?
         ORDER BY

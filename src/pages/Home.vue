@@ -111,7 +111,7 @@
               <q-space />
 
               <q-badge
-                class="q-py-xs q-px-sm no-border-radius text-subtitle2"
+                class="q-badge--home"
                 color="info"
                 :label="filterStats"
               />

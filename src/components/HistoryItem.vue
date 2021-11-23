@@ -27,7 +27,7 @@
     <div class="row items-center q-gutter-x-sm">
       <q-badge
         v-if="history.fingerprint"
-        class="q-py-none no-border-radius text-subtitle2"
+        class="q-badge--history"
         :color="history.fingerprintChanged === 1 ? 'warning' : 'dark'"
         outline
       >
@@ -39,7 +39,7 @@
 
       <q-badge
         v-if="certificateData"
-        class="q-py-none no-border-radius text-subtitle2"
+        class="q-badge--history"
         :color="certificateData.bitsColor"
         outline
       >
@@ -55,7 +55,7 @@
         <q-badge
           v-for="(error, i) in history.errors"
           :key="i"
-          class="q-py-none q-px-sm no-border-radius text-subtitle2"
+          class="q-badge--history"
           color="negative"
           outline
         >
@@ -107,7 +107,7 @@
         </q-item-section>
         <q-item-section side>
           <q-badge
-            class="q-py-none q-px-sm no-border-radius text-subtitle2"
+            class="q-badge--history"
             style="margin-right: -14px"
             :color="certificateData.validFromExpired ? 'negative' : 'positive'"
             outline
@@ -125,7 +125,7 @@
         </q-item-section>
         <q-item-section side>
           <q-badge
-            class="q-py-none q-px-sm no-border-radius text-subtitle2"
+            class="q-badge--history"
             style="margin-right: -14px"
             :color="certificateData.validToExpired ? 'negative' : (certificateData.validToAboutToExpire ? 'warning' : 'positive')"
             outline
@@ -147,7 +147,7 @@
           class="q-pb-sm relative-position"
         >
           <q-badge
-            class="absolute-bottom-right q-ma-sm q-px-md no-border-radius text-subtitle2"
+            class="absolute-bottom-right q-ma-sm q-px-md text-subtitle2"
             style="z-index: 1"
             color="secondary"
             transparent

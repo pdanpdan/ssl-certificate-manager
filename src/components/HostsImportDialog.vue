@@ -5,7 +5,7 @@
     persistent
     @hide="onDialogHide"
   >
-    <div class="q-dialog-plugin no-border-radius column no-wrap" style="max-width: 80vw; max-height: 80vh">
+    <div class="q-dialog-plugin column no-wrap" style="max-width: 80vw; max-height: 80vh">
       <q-form class="col column no-wrap" @submit="onOkClick">
         <q-card class="col column no-wrap" square>
           <q-card-section class="bg-primary text-white q-mb-md" horizontal>

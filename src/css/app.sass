@@ -2,6 +2,12 @@
 .q-dialog__backdrop
   background: rgba(96, 96, 96, 0.7)
 
+.q-btn,
+.q-badge,
+.q-tooltip,
+.q-dialog__inner > .q-dialog-plugin
+  border-radius: 0
+
 .q-tooltip
   padding: 8px 16px
   font-size: 0.75rem
@@ -9,9 +15,26 @@
   white-space: nowrap
   letter-spacing: 0.03333em
   line-height: 1.25rem
-  background: $dark
   color: white
-  border-radius: 0
+  background: $dark
+
+.q-badge
+  &--home,
+  &--host
+    font-size: 1rem
+    font-weight: 400
+    line-height: 1.75rem
+    letter-spacing: 0.00937em
+    padding-top: 0
+    padding-bottom: 0
+
+  &--history
+    font-size: 0.875rem
+    font-weight: 500
+    line-height: 1.375rem
+    letter-spacing: 0.00714em
+    padding-top: 0
+    padding-bottom: 0
 
 .column > .q-field.col
   .q-field__inner

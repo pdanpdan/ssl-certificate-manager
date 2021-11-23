@@ -62,7 +62,7 @@
 
           <q-badge
             v-if="host.category"
-            class="q-py-none no-border-radius text-subtitle1"
+            class="q-badge--host"
             color="dark"
             outline
           >
@@ -74,7 +74,7 @@
           <q-space />
 
           <q-badge
-            class="q-py-none no-border-radius text-subtitle1"
+            class="q-badge--host"
             color="dark"
             outline
           >

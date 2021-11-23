@@ -8,6 +8,8 @@ export const defaultFilters = {
   authorizedExpire: false,
 
   search: '',
+
+  viewDetailed: false,
 };
 
 export function getFullHostName(host) {

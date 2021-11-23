@@ -57,76 +57,92 @@
 
           <q-separator dark vertical />
 
-          <q-card-section class="col q-gutter-y-xs">
-            <div class="row items-center">
-              <q-checkbox
-                v-model="filters.active"
-                dark
-                color="primary"
-                :label="$t('host.filter_active')"
-              />
+          <q-card-section class="col">
+            <div class="q-gutter-y-xs">
+              <div class="row items-center">
+                <q-checkbox
+                  v-model="filters.active"
+                  dark
+                  color="primary"
+                  :label="$t('host.filter_active')"
+                />
 
-              <q-separator
-                class="q-ml-md q-mr-sm"
-                dark
-                vertical
-                inset
-              />
+                <q-separator
+                  class="q-ml-md q-mr-sm"
+                  dark
+                  vertical
+                  inset
+                />
 
-              <q-checkbox
-                v-model="filters.authorizedValid"
-                dark
-                color="primary"
-                :label="$t('host.filter_authorized_valid')"
-              />
+                <q-checkbox
+                  v-model="filters.authorizedValid"
+                  dark
+                  color="primary"
+                  :label="$t('host.filter_authorized_valid')"
+                />
 
-              <q-checkbox
-                v-model="filters.authorizedInvalid"
-                dark
-                color="primary"
-                :label="$t('host.filter_authorized_invalid')"
-              />
+                <q-checkbox
+                  v-model="filters.authorizedInvalid"
+                  dark
+                  color="primary"
+                  :label="$t('host.filter_authorized_invalid')"
+                />
 
-              <q-checkbox
-                v-model="filters.authorizedNotChecked"
-                dark
-                color="primary"
-                :label="$t('host.filter_authorized_not_checked')"
-              />
+                <q-checkbox
+                  v-model="filters.authorizedNotChecked"
+                  dark
+                  color="primary"
+                  :label="$t('host.filter_authorized_not_checked')"
+                />
 
-              <q-separator
-                class="q-ml-md q-mr-sm"
-                dark
-                vertical
-                inset
-              />
+                <q-separator
+                  class="q-ml-md q-mr-sm"
+                  dark
+                  vertical
+                  inset
+                />
 
-              <q-checkbox
-                v-model="filters.authorizedExpire"
-                dark
-                color="primary"
-                :label="$t('host.filter_authorized_expire')"
-              />
+                <q-checkbox
+                  v-model="filters.authorizedExpire"
+                  dark
+                  color="primary"
+                  :label="$t('host.filter_authorized_expire')"
+                />
 
-              <q-space />
+                <q-space />
 
-              <q-badge
-                class="q-badge--home"
-                color="info"
-                :label="filterStats"
-              />
+                <q-badge
+                  class="q-badge--home"
+                  color="info"
+                  :label="filterStats"
+                />
+              </div>
+
+              <div class="row items-center q-gutter-x-sm">
+                <q-input
+                  class="col"
+                  v-model="filters.search"
+                  standout
+                  dense
+                  square
+                  dark
+                  color="primary"
+                  clearable
+                  :label="$t('host.filter_search')"
+                />
+
+                <q-space />
+
+                <q-btn-toggle
+                  v-model="filters.viewDetailed"
+                  unelevated
+                  padding="sm"
+                  color="primary"
+                  toggle-color="accent"
+                  :options="viewDetailedOptions"
+                />
+              </div>
             </div>
-
-            <q-input
-              v-model="filters.search"
-              standout
-              dense
-              square
-              dark
-              color="primary"
-              clearable
-              :label="$t('host.filter_search')"
-            />
           </q-card-section>
 
           <q-separator dark vertical />
@@ -180,16 +196,19 @@
 
     <q-scroll-area id="hosts-scroll-area" class="col">
       <q-virtual-scroll
+         :class="{ 'q-mt-lg': filters.viewDetailed !== true }"
         :items="filteredHosts"
         scroll-target="#hosts-scroll-area > q-scrollarea__container"
-        virtual-scroll-item-size="388"
+        :virtual-scroll-item-size="filters.viewDetailed ? 400 : 100"
       >
         <template v-slot="{ item: host, index }">
           <host-item
             :key="index"
-            class="q-mx-md q-my-lg"
+            class="q-mx-md"
+            :class="filters.viewDetailed ? 'q-my-lg' : 'q-my-xs q-card--dense'"
             :host="host"
             :locked="processing.includes(host)"
+            :detailed="filters.viewDetailed"
           />
         </template>
       </q-virtual-scroll>
@@ -216,6 +235,11 @@ export default defineComponent({
   data() {
     return {
       processing: [],
+
+      viewDetailedOptions: [
+        { icon: 'view_headline', value: false },
+        { icon: 'view_agenda', value: true },
+      ],
     };
   },
 

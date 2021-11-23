@@ -149,7 +149,7 @@
               flat
               size="lg"
               padding="xs"
-              color="warning"
+              color="negative"
               icon="archive"
               :disable="processing || locked"
               @click="archiveHost"

@@ -92,9 +92,10 @@
           <q-separator class="col q-my-lg" />
 
           <q-chip
+            class="q-chip--history-status"
             square
+            outline
             size="md"
-            color="grey-3"
           >
             <q-avatar
               font-size="24px"

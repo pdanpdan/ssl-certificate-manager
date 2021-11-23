@@ -74,9 +74,10 @@
   },
   "import": {
     "btn_import": "Import hosts",
-    "btn_process": "Parse CSV",
     "hint_source": "CSV with columns 'host name' (mandatory), 'port', 'server name', 'description', and 'category' - delimited by ';' or ',",
-    "label_column_nr_for": "Column number for column '{column}' (0 based)",
+    "label_column_nr": "Column #{column}",
+    "label_column_nr_for": "Column number for '{column}'",
+    "label_parsed": "Found columns",
     "label_processed": "Found hosts",
     "label_source": "Source CSV text",
     "title_import": "Import hosts from CSV"

@@ -42,27 +42,41 @@
             />
           </q-card-section>
 
-          <q-card-section v-if="rows.length > 0" class="col column q-gutter-y-sm">
-            <div class="row no-wrap items-center q-col-gutter-x-sm">
-              <q-input
-                v-for="(column, i) in columnNames"
-                :key="i"
-                class="col"
-                v-model.number="columns[column]"
-                type="number"
-                dense
-                outlined
-                square
-                color="primary"
-                input-class="text-right"
-                :min="0"
-                :max="columnNames.length - 1"
-                :step="1"
-                :label="$t('import.label_column_nr_for', { column })"
-                stack-label
-              />
-            </div>
+          <q-card-section v-if="parsed.length > 0" class="col column">
+            <q-field
+              class="col"
+              outlined
+              square
+              readonly
+              color="primary"
+              :label="$t('import.label_parsed')"
+              stack-label
+            >
+              <q-scroll-area class="col q-mb-xs">
+                <q-markup-table
+                  class="q-pr-md"
+                  flat
+                  square
+                  dense
+                >
+                  <thead>
+                    <tr>
+                      <th v-for="column in parsedColumnsLength" :key="column" class="text-uppercase">{{ $t('import.label_column_nr', { column }) }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(row, j) in parsed" :key="j">
+                      <td v-for="column in parsedColumnsLength" :key="column">
+                        <span :class="{ 'text-grey-3': !row[column - 1] }">{{ row[column - 1] || 'N/A' }}</span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </q-markup-table>
+              </q-scroll-area>
+            </q-field>
+          </q-card-section>
 
+          <q-card-section v-if="rows.length > 0" class="col column">
             <q-field
               class="col"
               outlined
@@ -73,10 +87,28 @@
               stack-label
             >
               <q-scroll-area class="col q-mb-xs">
-                <q-markup-table class="q-pr-md" flat square>
+                <q-markup-table
+                  class="q-pr-md"
+                  flat
+                  square
+                  dense
+                >
                   <thead>
                     <tr>
-                      <th v-for="(column, i) in columnNames" :key="i" class="text-uppercase">{{ column }}</th>
+                      <th v-for="(column, i) in columnNames" :key="i">
+                        <div class="row no-wrap items-center q-gutter-x-sm">
+                          <div class="text-uppercase">{{ column }}</div>
+
+                          <input
+                            class="import__column-input"
+                            v-model.number="columns[column]"
+                            type="number"
+                            :min="1"
+                            :max="parsedColumnsLength"
+                            :step="1"
+                          />
+                        </div>
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -103,7 +135,8 @@
               unelevated
               color="primary"
               padding="sm md"
-              :label="labelBtnOk"
+              :label="$t('import.btn_import')"
+              :disable="rows.length === 0"
               :loading="processing"
             />
           </q-card-actions>
@@ -131,20 +164,16 @@ export default {
       parsed: [],
 
       columns: {
-        hostname: 0,
-        port: 1,
-        servername: 2,
-        description: 3,
-        category: 4,
+        hostname: 1,
+        port: 2,
+        servername: 3,
+        description: 4,
+        category: 5,
       },
     };
   },
 
   computed: {
-    labelBtnOk() {
-      return this.rows.length > 0 ? this.$t('import.btn_import') : this.$t('import.btn_process');
-    },
-
     columnNames() {
       return Object.keys(this.columns);
     },
@@ -153,12 +182,16 @@ export default {
       return this.$store.state.hosts.hosts.map((host) => this.columnNames.map((column) => host[column]).join('#'));
     },
 
+    parsedColumnsLength() {
+      return this.parsed.reduce((acc, row) => Math.max(acc, row.length), 0);
+    },
+
     rows() {
       const rows = this.parsed
         .map((row) => this.columnNames
           .reduce((acc, column) => ({
             ...acc,
-            [column]: row[this.columns[column]],
+            [column]: row[(this.columns[column] - 1) || 0],
           }), {}))
         .filter((row) => typeof row.hostname === 'string' && row.hostname.trim().length > 0)
         .map((row) => ({
@@ -180,6 +213,8 @@ export default {
     source() {
       if (this.parsed.length > 0) {
         this.parsed = [];
+      } else {
+        this.processRows();
       }
     },
   },
@@ -198,25 +233,6 @@ export default {
     },
 
     onOkClick() {
-      if (this.rows.length > 0) {
-        this.importRows();
-      } else {
-        this.processRows();
-      }
-    },
-
-    processRows() {
-      this.parsed = csvParse(this.source, {
-        delimiter: [';', ','],
-        relax: true,
-        relax_column_count: true,
-        skip_empty_lines: true,
-        skip_lines_with_empty_values: true,
-        trim: true,
-      });
-    },
-
-    importRows() {
       if (this.processing === true || this.rows.length === 0) {
         return;
       }
@@ -267,6 +283,17 @@ export default {
 
     onCancelClick() {
       this.hide();
+    },
+
+    processRows() {
+      this.parsed = csvParse(this.source, {
+        delimiter: [';', ','],
+        relax: true,
+        relax_column_count: true,
+        skip_empty_lines: true,
+        skip_lines_with_empty_values: true,
+        trim: true,
+      });
     },
   },
 };

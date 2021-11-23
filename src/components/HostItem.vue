@@ -88,7 +88,7 @@
           </q-badge>
         </div>
 
-        <div class="q-mt-none row no-wrap items-center" style="margin-left: -16px; margin-right: -16px">
+        <div class="q-mt-none row no-wrap items-center q-list__separator--history">
           <q-separator class="col q-my-lg" />
 
           <q-chip

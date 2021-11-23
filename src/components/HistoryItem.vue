@@ -1,5 +1,5 @@
 <template>
-  <div v-if="isHistory" class="q-mt-lg row no-wrap items-center" style="margin-left: -16px; margin-right: -16px">
+  <div v-if="isHistory" class="q-mt-lg row no-wrap items-center q-list__separator--history">
     <q-separator class="col q-my-lg" />
 
     <q-chip
@@ -109,7 +109,6 @@
         <q-item-section side>
           <q-badge
             class="q-badge--history"
-            style="margin-right: -14px"
             :color="certificateData.validFromExpired ? 'negative' : 'positive'"
             outline
             :label="certificateData.validFromExpireLabel"
@@ -127,7 +126,6 @@
         <q-item-section side>
           <q-badge
             class="q-badge--history"
-            style="margin-right: -14px"
             :color="certificateData.validToExpired ? 'negative' : (certificateData.validToAboutToExpire ? 'warning' : 'positive')"
             outline
             :label="certificateData.validToExpireLabel"

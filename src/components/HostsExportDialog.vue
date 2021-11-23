@@ -270,6 +270,7 @@ export default {
       });
 
       this.processing = false;
+
       this.$emit('ok');
       this.hide();
     },

@@ -9,7 +9,7 @@ export const defaultFilters = {
 
   search: '',
 
-  viewDetailed: false,
+  viewDetailed: true,
 };
 
 export function getFullHostName(host) {

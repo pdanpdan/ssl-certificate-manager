@@ -5,6 +5,14 @@
         <q-toolbar-title>
           {{ appName }}
         </q-toolbar-title>
+
+        <q-btn
+          flat
+          padding="sm"
+          color="white"
+          icon="tune"
+          @click="showConfig"
+        />
       </q-toolbar>
     </q-header>
 
@@ -70,6 +78,10 @@
 </template>
 
 <script>
+import { mapActions } from 'vuex';
+
+import ConfigDialog from 'components/ConfigDialog.vue';
+
 export default {
   name: 'App',
 
@@ -79,6 +91,22 @@ export default {
       appName: process.env.appName,
       appAuthor: process.env.appAuthor,
     };
+  },
+
+  methods: {
+    ...mapActions('hosts', [
+      'readHosts',
+    ]),
+
+    showConfig() {
+      this.$q
+        .dialog({
+          component: ConfigDialog,
+        })
+        .onOk(() => {
+          this.readHosts();
+        });
+    },
   },
 
   beforeMount() {

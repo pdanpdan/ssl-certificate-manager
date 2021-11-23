@@ -28,6 +28,18 @@
     "valid_from": "Valid from",
     "valid_to": "Valid to"
   },
+  "config": {
+    "btn_cancel": "Cancel",
+    "btn_save": "Save configuration",
+    "label_certificate_about_to_expire_days_warning": "How many days before cert expiration to show warning",
+    "label_certificate_bits_error": "Maximum number of key bits to show error",
+    "label_certificate_bits_warning": "Maximum number of key bits to show warning",
+    "label_verification_days_error": "How many days after cert validation to show error",
+    "label_verification_days_warning": "How many days after cert validation to show warning",
+    "msg_save": "The configuration was saved",
+    "msg_save_error": "Error saving configuration: {error}",
+    "title_config": "General settings"
+  },
   "error_404": {
     "btn_back": "Go back",
     "message": "Sorry, nothing here..."

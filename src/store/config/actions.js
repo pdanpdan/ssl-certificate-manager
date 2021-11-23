@@ -12,10 +12,12 @@ export function readConfig({ commit }) {
 }
 
 export function setConfig({ commit }, config) {
+  const configClone = JSON.parse(JSON.stringify(config));
+
   return window.sslCertAPI
-    .writeConfig(config)
+    .writeConfig(configClone)
     .then(() => {
-      commit('SET_CONFIG', config);
+      commit('SET_CONFIG', configClone);
     })
     .catch((error) => {
       console.error(error);

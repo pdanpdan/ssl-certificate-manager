@@ -58,6 +58,8 @@ const certificateChangedKeys = [
   'errors',
 ];
 
+const reExtractError = /^(?:\s*error\s*:)?\s*(.+)/i;
+
 contextBridge.exposeInMainWorld('sslCertAPI', {
   openDb() {
     sqlite.basePath = app.getPath('userData');
@@ -503,9 +505,12 @@ contextBridge.exposeInMainWorld('sslCertAPI', {
       });
 
       tlsSocket.on('error', (error) => {
+        const errorText = String(error);
+        const errorMatch = reExtractError.exec(errorText);
+
         history.errors.push({
           type: 'connection',
-          code: String(error),
+          code: errorMatch !== null ? errorMatch[1] : errorText,
         });
 
         tlsSocket.destroy();

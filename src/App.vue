@@ -78,11 +78,12 @@
 </template>
 
 <script>
+import { defineComponent } from 'vue';
 import { mapActions } from 'vuex';
 
 import ConfigDialog from 'components/ConfigDialog.vue';
 
-export default {
+export default defineComponent({
   name: 'App',
 
   data() {
@@ -121,5 +122,5 @@ export default {
   beforeUnmount() {
     window.sslCertAPI.closeDb();
   },
-};
+});
 </script>

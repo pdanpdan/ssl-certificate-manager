@@ -7,11 +7,15 @@ import {
 import { initialize as electronRemoteInitialize, enable as electronRemoteEnable } from '@electron/remote/main';
 import { unlinkSync } from 'fs';
 import { join as pathJoin, resolve as pathResolve } from 'path';
+import os from 'os';
 
 electronRemoteInitialize();
 
+// needed in case process is undefined under Linux
+const platform = process.platform || os.platform();
+
 try {
-  if (process.platform === 'win32' && nativeTheme.shouldUseDarkColors === true) {
+  if (platform === 'win32' && nativeTheme.shouldUseDarkColors === true) {
     unlinkSync(pathJoin(app.getPath('userData'), 'DevTools Extensions'));
   }
 } catch (err) {
@@ -27,6 +31,7 @@ function createWindow() {
    * Initial window options
    */
   mainWindow = new BrowserWindow({
+    icon: pathResolve(__dirname, 'icons/icon.png'), // tray icon
     ...(
       process.env.DEBUGGING
         ? {
@@ -42,7 +47,6 @@ function createWindow() {
     ),
     useContentSize: true,
     autoHideMenuBar: true,
-    icon: pathResolve(__dirname, 'icons', 'icon.png'),
     webPreferences: {
       contextIsolation: true,
       enableRemoteModule: true,
@@ -71,10 +75,10 @@ function createWindow() {
   });
 }
 
-app.on('ready', createWindow);
+app.whenReady().then(createWindow);
 
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
+  if (platform !== 'darwin') {
     app.quit();
   }
 });

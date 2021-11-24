@@ -224,13 +224,14 @@
 </template>
 
 <script>
+import { defineComponent } from 'vue';
 import { mapState, mapActions } from 'vuex';
 
 import HostEdit from 'components/HostEditDialog.vue';
 import HistoryItem from 'components/HistoryItem.vue';
 import { getFullHostName } from '../store/hosts/state.js';
 
-export default {
+export default defineComponent({
   name: 'HostItemComponent',
 
   components: {
@@ -465,5 +466,5 @@ export default {
         });
     },
   },
-};
+});
 </script>

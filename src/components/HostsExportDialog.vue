@@ -101,11 +101,12 @@
 </template>
 
 <script>
+import { defineComponent } from 'vue';
 import { exportFile } from 'quasar';
 import { stringify as csvStringify } from 'csv-stringify/browser/esm/sync.js';
 import { mapGetters } from 'vuex';
 
-export default {
+export default defineComponent({
   name: 'HostsExportDialog',
 
   emits: ['ok', 'hide'],
@@ -279,5 +280,5 @@ export default {
       this.hide();
     },
   },
-};
+});
 </script>

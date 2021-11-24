@@ -183,12 +183,13 @@
 </template>
 
 <script>
+import { defineComponent } from 'vue';
 import { date } from 'quasar';
 import { mapState } from 'vuex';
 
 const { formatDate } = date;
 
-export default {
+export default defineComponent({
   name: 'HistoryItemComponent',
 
   props: {
@@ -310,5 +311,5 @@ export default {
       return data;
     },
   },
-};
+});
 </script>

@@ -65,9 +65,10 @@
 </template>
 
 <script>
+import { defineComponent } from 'vue';
 import { mapActions } from 'vuex';
 
-export default {
+export default defineComponent({
   name: 'ConfigDialog',
 
   emits: ['ok', 'hide'],
@@ -159,5 +160,5 @@ export default {
       this.hide();
     },
   },
-};
+});
 </script>

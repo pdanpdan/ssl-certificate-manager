@@ -1,3 +1,5 @@
+import { LocalStorage } from 'quasar';
+
 export const defaultFilters = {
   active: false,
 
@@ -11,6 +13,8 @@ export const defaultFilters = {
 
   viewDetailed: true,
 };
+
+const savedHostsFilters = LocalStorage.getItem('hosts_filters');
 
 export function getFullHostName(host) {
   let name = '';
@@ -33,5 +37,6 @@ export default {
 
   filters: {
     ...defaultFilters,
+    ...savedHostsFilters,
   },
 };

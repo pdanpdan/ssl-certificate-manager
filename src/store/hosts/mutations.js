@@ -1,3 +1,5 @@
+import { LocalStorage } from 'quasar';
+
 import { defaultFilters } from './state.js';
 
 export function SET_HOSTS(state, hosts) {
@@ -10,4 +12,6 @@ export function SET_FILTERS(state, filters) {
     ...state.filters,
     ...filters,
   };
+
+  LocalStorage.set('hosts_filters', state.filters);
 }

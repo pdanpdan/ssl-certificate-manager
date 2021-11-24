@@ -97,7 +97,9 @@
 </template>
 
 <script>
-export default {
+import { defineComponent } from 'vue';
+
+export default defineComponent({
   name: 'HostEditDialog',
 
   props: {
@@ -220,5 +222,5 @@ export default {
       this.hostname = value;
     },
   },
-};
+});
 </script>

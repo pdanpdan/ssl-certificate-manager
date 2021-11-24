@@ -4,6 +4,7 @@
   "description": "SSL Certificate Manager",
   "productName": "SSL Certificate Manager",
   "author": "Dan Popescu <pdan.popescu@gmail.com>",
+  "private": true,
   "scripts": {
     "dev": "quasar dev -m electron",
     "build": "quasar build -m electron",
@@ -19,13 +20,14 @@
     "qs": "^6.10.1",
     "quasar": "^2.3.3",
     "sql.js": "^1.6.2",
-    "vue-i18n": "^9.2.0-beta.20",
+    "vue-i18n": "^9.2.0-beta.21",
     "vuex": "^4.0.2"
   },
   "devDependencies": {
     "@babel/eslint-parser": "^7.16.3",
     "@quasar/app": "^3.2.3",
     "electron": "^16.0.1",
+    "electron-builder": "^22.4.0",
     "electron-packager": "^15.4.0",
     "eslint": "^7.32.0",
     "eslint-config-airbnb-base": "^15.0.0",

@@ -347,16 +347,20 @@ export default defineComponent({
 
       return hostsClones
         .reduce(
-          (acc, host) => acc.then(
-            () => window.sslCertAPI
-              .verifyHost(host)
-              .then((history) => window.sslCertAPI.writeHostHistory(host, history))
-              .catch(() => {})
-              .then(() => {
-                this.readHosts();
-                this.processing = this.processing.filter((hId) => hId !== host.id);
-              }),
-          ),
+          (acc, host) => acc.then(() => window.sslCertAPI
+            .verifyHost(host)
+            .then((history) => window.sslCertAPI.writeHostHistory(host, history))
+            .catch(() => {})
+            .then(() => {
+              const srcHost = this.hosts.find((h) => h.id === host.id);
+
+              if (srcHost) {
+                this.$store.dispatch('hosts/selectHost', { host: srcHost, selected: false });
+              }
+
+              this.readHosts();
+              this.processing = this.processing.filter((hId) => hId !== host.id);
+            })),
           Promise.resolve(),
         ).then(() => {
           this.processing = [];

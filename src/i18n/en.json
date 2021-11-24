@@ -49,6 +49,10 @@
     "btn_cancel": "Cancel",
     "btn_export": "Export hosts",
     "label_hosts": "Hosts - columns to export",
+    "msg_copy": "The data was copied to clipboard",
+    "msg_copy_error": "Error copying the data to clipboard: {error}",
+    "msg_save": "The file was saved",
+    "msg_save_error": "Error saving the file: {error}",
     "title_export": "Export hosts to CSV"
   },
   "host": {

@@ -28,7 +28,7 @@
             </q-card-actions>
           </q-card-section>
 
-          <q-card-section class="col column">
+          <q-card-section class="col column relative-position">
             <q-field
               class="col"
               outlined
@@ -73,6 +73,17 @@
                 </q-markup-table>
               </q-scroll-area>
             </q-field>
+
+            <q-btn
+              class="absolute-bottom-right q-ma-md"
+              flat
+              square
+              color="primary"
+              size="md"
+              padding="sm"
+              icon="content_copy"
+              @click="onCopyClick"
+            />
           </q-card-section>
 
           <q-card-actions align="between">
@@ -102,7 +113,7 @@
 
 <script>
 import { defineComponent } from 'vue';
-import { exportFile } from 'quasar';
+import { copyToClipboard, exportFile } from 'quasar';
 import { stringify as csvStringify } from 'csv-stringify/browser/esm/sync.js';
 import { mapGetters } from 'vuex';
 
@@ -265,15 +276,52 @@ export default defineComponent({
         header: true,
       });
 
-      exportFile(`ssl_cert_manager_hosts_${ Date.now() }.csv`, csv, {
+      const status = exportFile(`ssl_cert_manager_hosts_${ Date.now() }.csv`, csv, {
         encoding: 'utf-8',
         mimeType: 'text/csv;charset=utf-8;',
       });
+
+      if (status === true) {
+        this.$q.notify({
+          type: 'positive',
+          message: this.$t('export.msg_save'),
+        });
+      } else {
+        console.error(status);
+
+        this.$q.notify({
+          type: 'negative',
+          message: this.$t('export.msg_save_error', { error: status }),
+        });
+      }
 
       this.processing = false;
 
       this.$emit('ok');
       this.hide();
+    },
+
+    onCopyClick() {
+      const csv = csvStringify(this.rows, {
+        delimiter: ';',
+        header: true,
+      });
+
+      copyToClipboard(csv)
+        .then(() => {
+          this.$q.notify({
+            type: 'positive',
+            message: this.$t('export.msg_copy'),
+          });
+        })
+        .catch((error) => {
+          console.error(error);
+
+          this.$q.notify({
+            type: 'negative',
+            message: this.$t('export.msg_copy_error', { error }),
+          });
+        });
     },
 
     onCancelClick() {

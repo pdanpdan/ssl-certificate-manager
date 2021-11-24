@@ -1,0 +1,16 @@
+{
+  "vetur.validation.template": false,
+  "vetur.format.enable": false,
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "vue"
+  ],
+  "vetur.experimental.templateInterpolationService": false,
+  "i18n-ally.localesPaths": [
+    "src/i18n"
+  ],
+  "i18n-ally.sourceLanguage": "en",
+  "i18n-ally.keystyle": "nested"
+}

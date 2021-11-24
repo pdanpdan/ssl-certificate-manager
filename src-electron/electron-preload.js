@@ -4,6 +4,10 @@ import { resolve as pathResolve } from 'path';
 import { readFileSync, writeFileSync } from 'fs';
 import * as initSqlJs from 'sql.js';
 import * as tls from 'tls';
+import * as sslRootCas from 'ssl-root-cas';
+import * as sslWinCa from 'win-ca/api';
+import * as sslMacCa from 'mac-ca';
+import * as sslLinuxCa from 'linux-ca';
 
 import isDeepEqual from '../src/utils/isDeepEqual.js';
 
@@ -61,6 +65,43 @@ const certificateChangedKeys = [
 ];
 
 const reExtractError = /^(?:\s*error\s*:)?\s*(.+)/i;
+
+let secureContext;
+
+const rootCas = sslRootCas.create();
+tls.rootCertificates.forEach((cert) => {
+  rootCas.push(cert);
+});
+
+try {
+  sslWinCa({ store: ['root', 'ca'], ondata: rootCas });
+} catch (err) {
+  // caught
+}
+
+try {
+  sslMacCa.each((cert) => { rootCas.push(cert); });
+} catch (err) {
+  // caught
+}
+
+try {
+  sslLinuxCa.getAllCerts()
+    .then((certs) => {
+      certs.forEach((cert) => {
+        rootCas.push(cert);
+      });
+
+      secureContext = tls.createSecureContext({ ca: rootCas });
+    })
+    .catch((error) => {
+      console.error(error);
+
+      secureContext = tls.createSecureContext({ ca: rootCas });
+    });
+} catch (err) {
+  secureContext = tls.createSecureContext({ ca: rootCas });
+}
 
 contextBridge.exposeInMainWorld('sslCertAPI', {
   openDb() {
@@ -379,7 +420,9 @@ contextBridge.exposeInMainWorld('sslCertAPI', {
         servername: host.servername || host.hostname,
         port: host.port || 443,
 
-        // ca: rootCas,
+        // TLS context object created with tls.createSecureContext()
+        // If a secureContext is not provided, one will be created by passing the entire options object to tls.createSecureContext()
+        secureContext,
 
         // <boolean> If set to false, then the socket will automatically end the writable side when the readable side ends
         // If the socket option is set, this option has no effect. See the allowHalfOpen option of net.Socket for details

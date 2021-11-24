@@ -88,51 +88,49 @@ contextBridge.exposeInMainWorld('sslCertAPI', {
           }
 
           sqlite.db.run(`
-            CREATE TABLE IF NOT EXISTS config (
+            CREATE TABLE IF NOT EXISTS version (
               id INTEGER PRIMARY KEY,
-              version INTEGER NOT NULL DEFAULT ${ DB_VERSION },
-              verificationDaysError INTEGER NOT NULL DEFAULT 30,
-              verificationDaysWarning INTEGER NOT NULL DEFAULT 7,
-              certificateBitsError INTEGER NOT NULL DEFAULT 2048,
-              certificateBitsWarning INTEGER NOT NULL DEFAULT 4096,
-              certificateAboutToExpireDaysWarning INTEGER NOT NULL DEFAULT 90
+              version INTEGER NOT NULL DEFAULT ${ DB_VERSION }
             )
           `);
 
-          const config = sqliteRes2Rows(sqlite.db.exec('SELECT * FROM config WHERE id = 1'));
+          const versionRes = sqliteRes2Rows(sqlite.db.exec('SELECT * FROM version WHERE id = 1'));
+          const version = versionRes.length === 0 || Number.isNaN(versionRes[0].version) ? 0 : versionRes[0].version;
 
-          if (config.length === 0 || config[0].version !== 1) {
-            sqlite.db.run(`
-              CREATE TABLE IF NOT EXISTS hosts (
-                id INTEGER PRIMARY KEY,
-                hostname TEXT NOT NULL,
-                servername TEXT NOT NULL DEFAULT '',
-                port INTEGER NOT NULL DEFAULT 443,
-                description TEXT NOT NULL DEFAULT '',
-                category TEXT NOT NULL DEFAULT '',
-                active INTEGER NOT NULL DEFAULT 1,
-                idHistory INTEGER DEFAULT NULL
-              )
-            `);
+          if (version < DB_VERSION) {
+            if (version === 0) {
+              sqlite.db.run(`
+                CREATE TABLE IF NOT EXISTS hosts (
+                  id INTEGER PRIMARY KEY,
+                  hostname TEXT NOT NULL,
+                  servername TEXT NOT NULL DEFAULT '',
+                  port INTEGER NOT NULL DEFAULT 443,
+                  description TEXT NOT NULL DEFAULT '',
+                  category TEXT NOT NULL DEFAULT '',
+                  active INTEGER NOT NULL DEFAULT 1,
+                  idHistory INTEGER DEFAULT NULL
+                )
+              `);
 
-            sqlite.db.run(`
-              CREATE TABLE IF NOT EXISTS hosts_history (
-                id INTEGER PRIMARY KEY,
-                idHost INTEGER NOT NULL,
-                ts DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                authorized INTEGER NOT NULL DEFAULT 0,
-                fingerprint TEXT DEFAULT NULL,
-                certificates TEXT DEFAULT NULL,
-                errors TEXT DEFAULT NULL
-              )
-            `);
+              sqlite.db.run(`
+                CREATE TABLE IF NOT EXISTS hosts_history (
+                  id INTEGER PRIMARY KEY,
+                  idHost INTEGER NOT NULL,
+                  ts DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                  authorized INTEGER NOT NULL DEFAULT 0,
+                  fingerprint TEXT DEFAULT NULL,
+                  certificates TEXT DEFAULT NULL,
+                  errors TEXT DEFAULT NULL
+                )
+              `);
 
-            sqlite.db.run(`
-              CREATE INDEX IF NOT EXISTS idx_hosts_history_idHost
-              ON hosts_history (idHost, ts DESC)
-            `);
+              sqlite.db.run(`
+                CREATE INDEX IF NOT EXISTS idx_hosts_history_idHost
+                ON hosts_history (idHost, ts DESC)
+              `);
+            }
 
-            sqlite.db.run('REPLACE INTO config (id, version) VALUES (1, ?)', [DB_VERSION]);
+            sqlite.db.run('REPLACE INTO version (id, version) VALUES (1, ?)', [DB_VERSION]);
           }
 
           writeFileSync(sqlite.filePath, Buffer.from(sqlite.db.export()));
@@ -158,56 +156,6 @@ contextBridge.exposeInMainWorld('sslCertAPI', {
 
   getDbLocation() {
     return sqlite.filePath;
-  },
-
-  readConfig() {
-    if (sqlite.dbPromise === undefined) {
-      return Promise.reject(new Error('Cannot open db'));
-    }
-
-    return sqlite.dbPromise.then((db) => {
-      const rows = sqliteRes2Rows(db.exec('SELECT * FROM config WHERE id = 1'));
-
-      return {
-        verificationDaysError: 30,
-        verificationDaysWarning: 7,
-        certificateBitsError: 2048,
-        certificateBitsWarning: 4096,
-        certificateAboutToExpireDaysWarning: 90,
-        ...rows[0],
-      };
-    });
-  },
-
-  writeConfig(config) {
-    if (sqlite.dbPromise === undefined) {
-      return Promise.reject(new Error('Cannot open db'));
-    }
-
-    if (config !== Object(config)) {
-      return Promise.reject(new Error('Invalid config definition'));
-    }
-
-    return sqlite.dbPromise.then((db) => {
-      db.run(`
-        UPDATE config
-        SET
-          verificationDaysError = COALESCE(?, verificationDaysError),
-          verificationDaysWarning = COALESCE(?, verificationDaysWarning),
-          certificateBitsError = COALESCE(?, certificateBitsError),
-          certificateBitsWarning = COALESCE(?, certificateBitsWarning),
-          certificateAboutToExpireDaysWarning = COALESCE(?, certificateAboutToExpireDaysWarning)
-        WHERE id = 1
-      `, [
-        sqlEscape(config.verificationDaysError),
-        sqlEscape(config.verificationDaysWarning),
-        sqlEscape(config.certificateBitsError),
-        sqlEscape(config.certificateBitsWarning),
-        sqlEscape(config.certificateAboutToExpireDaysWarning),
-      ]);
-
-      writeFileSync(sqlite.filePath, Buffer.from(db.export()));
-    });
   },
 
   readHosts(listAll) {

@@ -1,3 +1,5 @@
+import { LocalStorage } from 'quasar';
+
 export const defaultConfig = {
   durationDay: 1000 * 60 * 60 * 24,
   verificationDaysError: 30,
@@ -7,8 +9,11 @@ export const defaultConfig = {
   certificateAboutToExpireDaysWarning: 90,
 };
 
+const savedConfig = LocalStorage.getItem('config');
+
 export default {
   config: {
     ...defaultConfig,
+    ...savedConfig,
   },
 };

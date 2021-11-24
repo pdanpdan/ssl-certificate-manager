@@ -14,7 +14,7 @@ export const defaultFilters = {
   viewDetailed: true,
 };
 
-const savedHostsFilters = LocalStorage.getItem('hosts_filters');
+const savedFilters = LocalStorage.getItem('hosts_filters');
 
 export function getFullHostName(host) {
   let name = '';
@@ -37,6 +37,6 @@ export default {
 
   filters: {
     ...defaultFilters,
-    ...savedHostsFilters,
+    ...savedFilters,
   },
 };

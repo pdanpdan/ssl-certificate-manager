@@ -216,7 +216,7 @@
             class="q-mx-md"
             :class="filters.viewDetailed ? 'q-my-lg' : 'q-my-xs q-card--dense'"
             :host="host"
-            :locked="processing.includes(host)"
+            :locked="processing.includes(host.id)"
             :detailed="filters.viewDetailed"
           />
         </template>
@@ -341,7 +341,7 @@ export default defineComponent({
     },
 
     verifySelectedHosts() {
-      this.processing = this.filteredSelectedHosts.slice();
+      this.processing = this.filteredSelectedHosts.map((h) => h.id);
 
       const hostsClones = this.filteredSelectedHosts.map((h) => JSON.parse(JSON.stringify(h)));
 
@@ -353,13 +353,12 @@ export default defineComponent({
               .then((history) => window.sslCertAPI.writeHostHistory(host, history))
               .catch(() => {})
               .then(() => {
-                this.processing = this.processing.filter((h) => h.id !== host.id);
+                this.readHosts();
+                this.processing = this.processing.filter((hId) => hId !== host.id);
               }),
           ),
           Promise.resolve(),
         ).then(() => {
-          this.readHosts();
-
           this.processing = [];
         });
     },

@@ -120,6 +120,7 @@
 
               <div class="row items-center q-gutter-x-sm">
                 <q-input
+                  ref="filterField"
                   class="col"
                   v-model="filters.search"
                   standout
@@ -368,10 +369,22 @@ export default defineComponent({
         height: `${ height - offset }px`,
       };
     },
+
+    onKeyDown(evt) {
+      if ((evt.metaKey === true || evt.ctrlKey === true) && evt.code === 'KeyF' && this.$refs.filterField) {
+        this.$refs.filterField.focus();
+        evt.preventDefault();
+      }
+    },
   },
 
   mounted() {
     this.readHosts();
+    window.addEventListener('keydown', this.onKeyDown, true);
+  },
+
+  beforeUnmount() {
+    window.removeEventListener('keydown', this.onKeyDown, true);
   },
 });
 </script>

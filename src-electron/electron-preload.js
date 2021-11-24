@@ -66,41 +66,40 @@ const certificateChangedKeys = [
 
 const reExtractError = /^(?:\s*error\s*:)?\s*(.+)/i;
 
-let secureContext;
+const rootCas = new Set(sslRootCas.create());
+console.info('rootCas:', rootCas.size);
 
-const rootCas = sslRootCas.create();
-tls.rootCertificates.forEach((cert) => {
-  rootCas.push(cert);
-});
+tls.rootCertificates.forEach((cert) => { rootCas.add(cert); });
+console.info('rootCas + rootCertificates:', rootCas.size);
 
 try {
-  sslWinCa({ store: ['root', 'ca'], ondata: rootCas });
-} catch (err) {
-  // caught
+  sslWinCa({
+    store: ['root', 'ca'],
+    ondata: (cert) => { rootCas.add(cert); },
+  });
+  console.info('rootCas + winCertificates:', rootCas.size);
+} catch (error) {
+  console.error(error);
 }
 
 try {
-  sslMacCa.each((cert) => { rootCas.push(cert); });
-} catch (err) {
-  // caught
+  sslMacCa.each((cert) => { rootCas.add(cert); });
+  console.info('rootCas + macCertificates:', rootCas.size);
+} catch (error) {
+  console.error(error);
 }
 
 try {
   sslLinuxCa.getAllCerts()
     .then((certs) => {
-      certs.forEach((cert) => {
-        rootCas.push(cert);
-      });
-
-      secureContext = tls.createSecureContext({ ca: rootCas });
+      certs.forEach((cert) => { rootCas.add(cert); });
+      console.info('rootCas + linuxCertificates:', rootCas.size);
     })
     .catch((error) => {
       console.error(error);
-
-      secureContext = tls.createSecureContext({ ca: rootCas });
     });
-} catch (err) {
-  secureContext = tls.createSecureContext({ ca: rootCas });
+} catch (error) {
+  console.error(error);
 }
 
 contextBridge.exposeInMainWorld('sslCertAPI', {
@@ -420,9 +419,7 @@ contextBridge.exposeInMainWorld('sslCertAPI', {
         servername: host.servername || host.hostname,
         port: host.port || 443,
 
-        // TLS context object created with tls.createSecureContext()
-        // If a secureContext is not provided, one will be created by passing the entire options object to tls.createSecureContext()
-        secureContext,
+        ca: [...rootCas],
 
         // <boolean> If set to false, then the socket will automatically end the writable side when the readable side ends
         // If the socket option is set, this option has no effect. See the allowHalfOpen option of net.Socket for details

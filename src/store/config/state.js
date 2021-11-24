@@ -4,7 +4,7 @@ export const defaultConfig = {
   verificationDaysWarning: 7,
   certificateBitsError: 2048,
   certificateBitsWarning: 4096,
-  certificateAboutToExpireDaysWarning: 45,
+  certificateAboutToExpireDaysWarning: 90,
 };
 
 export default {

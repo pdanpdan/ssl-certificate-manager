@@ -51,6 +51,8 @@ const parseErrorsAndCertificates = (row) => {
   return row;
 };
 
+const sqlEscape = (value) => (value === undefined ? null : value);
+
 const certificateChangedKeys = [
   'authorized',
   'fingerprint',
@@ -93,7 +95,7 @@ contextBridge.exposeInMainWorld('sslCertAPI', {
               verificationDaysWarning INTEGER NOT NULL DEFAULT 7,
               certificateBitsError INTEGER NOT NULL DEFAULT 2048,
               certificateBitsWarning INTEGER NOT NULL DEFAULT 4096,
-              certificateAboutToExpireDaysWarning INTEGER NOT NULL DEFAULT 45
+              certificateAboutToExpireDaysWarning INTEGER NOT NULL DEFAULT 90
             )
           `);
 
@@ -154,6 +156,10 @@ contextBridge.exposeInMainWorld('sslCertAPI', {
     }
   },
 
+  getDbLocation() {
+    return sqlite.filePath;
+  },
+
   readConfig() {
     if (sqlite.dbPromise === undefined) {
       return Promise.reject(new Error('Cannot open db'));
@@ -167,7 +173,7 @@ contextBridge.exposeInMainWorld('sslCertAPI', {
         verificationDaysWarning: 7,
         certificateBitsError: 2048,
         certificateBitsWarning: 4096,
-        certificateAboutToExpireDaysWarning: 45,
+        certificateAboutToExpireDaysWarning: 90,
         ...rows[0],
       };
     });
@@ -193,11 +199,11 @@ contextBridge.exposeInMainWorld('sslCertAPI', {
           certificateAboutToExpireDaysWarning = COALESCE(?, certificateAboutToExpireDaysWarning)
         WHERE id = 1
       `, [
-        config.verificationDaysError === undefined ? null : config.verificationDaysError,
-        config.verificationDaysWarning === undefined ? null : config.verificationDaysWarning,
-        config.certificateBitsError === undefined ? null : config.certificateBitsError,
-        config.certificateBitsWarning === undefined ? null : config.certificateBitsWarning,
-        config.certificateAboutToExpireDaysWarning === undefined ? null : config.certificateAboutToExpireDaysWarning,
+        sqlEscape(config.verificationDaysError),
+        sqlEscape(config.verificationDaysWarning),
+        sqlEscape(config.certificateBitsError),
+        sqlEscape(config.certificateBitsWarning),
+        sqlEscape(config.certificateAboutToExpireDaysWarning),
       ]);
 
       writeFileSync(sqlite.filePath, Buffer.from(db.export()));
@@ -302,11 +308,11 @@ contextBridge.exposeInMainWorld('sslCertAPI', {
           )
           VALUES (?, ?, ?, ?, ?, ?)
         `, [
-          host.hostname,
-          host.servername,
-          host.port,
-          host.description,
-          host.category,
+          sqlEscape(host.hostname),
+          sqlEscape(host.servername),
+          sqlEscape(host.port),
+          sqlEscape(host.description),
+          sqlEscape(host.category),
           host.active ? 1 : 0,
         ]);
       } else {
@@ -321,14 +327,14 @@ contextBridge.exposeInMainWorld('sslCertAPI', {
             active = COALESCE(?, active)
           WHERE id = ?
         `, [
-          host.hostname === undefined ? null : host.hostname,
-          host.servername === undefined ? null : host.servername,
-          host.port === undefined ? null : host.port,
-          host.description === undefined ? null : host.description,
-          host.category === undefined ? null : host.category,
+          sqlEscape(host.hostname),
+          sqlEscape(host.servername),
+          sqlEscape(host.port),
+          sqlEscape(host.description),
+          sqlEscape(host.category),
           // eslint-disable-next-line no-nested-ternary
           host.active === undefined ? null : (host.active ? 1 : 0),
-          host.id,
+          sqlEscape(host.id),
         ]);
       }
 
@@ -350,7 +356,7 @@ contextBridge.exposeInMainWorld('sslCertAPI', {
         DELETE FROM hosts
         WHERE id = ?
       `, [
-        host.id,
+        sqlEscape(host.id),
       ]);
 
       writeFileSync(sqlite.filePath, Buffer.from(db.export()));
@@ -385,9 +391,9 @@ contextBridge.exposeInMainWorld('sslCertAPI', {
           VALUES (?, ?, ?, ?, ?)
           RETURNING id
         `, [
-          host.id,
-          history.authorized,
-          history.fingerprint,
+          sqlEscape(host.id),
+          sqlEscape(history.authorized),
+          sqlEscape(history.fingerprint),
           JSON.stringify(history.certificates || []),
           JSON.stringify(history.errors || []),
         ]);
@@ -400,8 +406,8 @@ contextBridge.exposeInMainWorld('sslCertAPI', {
             SET idHistory = ?
             WHERE id = ?
           `, [
-            rows[0].id,
-            host.id,
+            sqlEscape(rows[0].id),
+            sqlEscape(host.id),
           ]);
         }
       } else {
@@ -410,7 +416,7 @@ contextBridge.exposeInMainWorld('sslCertAPI', {
           SET ts = CURRENT_TIMESTAMP
           WHERE id = ?
         `, [
-          host.idHistory,
+          sqlEscape(host.idHistory),
         ]);
       }
 

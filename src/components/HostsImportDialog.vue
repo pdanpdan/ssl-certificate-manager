@@ -61,7 +61,7 @@
                 >
                   <thead>
                     <tr>
-                      <th v-for="colNr in parsedColumnsLength" :key="colNr">{{ $t('import.label_column_nr', { colNr }) }}</th>
+                      <th v-for="colNr in parsedColumnsLength" :key="colNr">{{ $t('import.label_column_nr', { column: colNr }) }}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -103,9 +103,19 @@
                             class="import-table__column-input"
                             v-model.number="columns[colName]"
                             type="number"
-                            :min="1"
+                            :min="0"
                             :max="parsedColumnsLength"
                             :step="1"
+                          />
+
+                          <q-btn
+                            flat
+                            square
+                            size="sm"
+                            padding="xs"
+                            color="primary"
+                            icon="clear"
+                            @click="columns[colName] = 0"
                           />
                         </div>
                       </th>
@@ -166,10 +176,10 @@ export default defineComponent({
 
       columns: {
         hostname: 1,
-        port: 2,
-        servername: 3,
-        description: 4,
-        category: 5,
+        category: 2,
+        description: 3,
+        servername: 4,
+        port: 5,
       },
     };
   },
@@ -213,6 +223,16 @@ export default defineComponent({
   watch: {
     source() {
       this.processRows();
+    },
+
+    parsedColumnsLength(len) {
+      this.columnNames.forEach((colName, colNr) => {
+        if (this.columns[colName] > len) {
+          this.columns[colName] = 0;
+        } else if (this.columns[colName] === 0) {
+          this.columns[colName] = colNr + 1;
+        }
+      });
     },
   },
 

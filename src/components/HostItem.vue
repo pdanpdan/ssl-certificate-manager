@@ -3,9 +3,8 @@
     <q-card-section horizontal>
       <q-card-actions vertical :class="actionsAlign">
         <q-checkbox
-          :style="detailed ? undefined : 'padding-left: 10px; padding-right: 10px'"
           :model-value="host.selected"
-          :dense="detailed !== true"
+          v-bind="selectionProps"
           color="primary"
           :disable="processing || locked || host.active !== 1"
           @update:model-value="selectHost"
@@ -342,6 +341,18 @@ export default defineComponent({
           padding: 'xs',
           flat: true,
           style: 'margin-left: 5px; margin-right: 5px',
+        };
+    },
+
+    selectionProps() {
+      return this.detailed
+        ? {}
+        : {
+          style: {
+            paddingLeft: '10px',
+            paddingRight: '10px',
+          },
+          dense: true,
         };
     },
   },

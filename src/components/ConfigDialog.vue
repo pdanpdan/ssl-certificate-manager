@@ -38,6 +38,15 @@
               autofocus
               :label="$t(conf.label)"
             />
+
+            <q-input
+              :model-value="dbLocation"
+              outlined
+              square
+              color="primary"
+              readonly
+              :label="$t('config.label_db_location')"
+            />
           </q-card-section>
 
           <q-card-actions align="between">
@@ -79,6 +88,8 @@ export default defineComponent({
     return {
       processing: false,
 
+      dbLocation: null,
+
       options: [
         {
           key: 'verificationDaysError',
@@ -114,6 +125,8 @@ export default defineComponent({
     ]),
 
     show() {
+      this.dbLocation = window.sslCertAPI.getDbLocation();
+
       this.$refs.dialog.show();
     },
 

@@ -140,7 +140,15 @@
                   color="primary"
                   toggle-color="accent"
                   :options="viewDetailedOptions"
-                />
+                >
+                  <template
+                    v-for="option in viewDetailedOptions"
+                    :key="option.slot"
+                    v-slot:[option.slot]
+                  >
+                    <q-tooltip>{{ $t(option.tooltip) }}</q-tooltip>
+                  </template>
+                </q-btn-toggle>
               </div>
             </div>
           </q-card-section>
@@ -237,8 +245,18 @@ export default defineComponent({
       processing: [],
 
       viewDetailedOptions: [
-        { icon: 'view_headline', value: false },
-        { icon: 'view_agenda', value: true },
+        {
+          icon: 'view_headline',
+          value: false,
+          slot: 's1',
+          tooltip: 'host.tooltip_view_dense',
+        },
+        {
+          icon: 'view_agenda',
+          value: true,
+          slot: 's2',
+          tooltip: 'host.tooltip_view_detailed',
+        },
       ],
     };
   },

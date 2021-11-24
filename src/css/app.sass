@@ -6,6 +6,7 @@
 .q-btn-group,
 .q-badge,
 .q-chip,
+.q-chip .q-avatar,
 .q-tooltip,
 .q-dialog__inner > .q-dialog-plugin
   border-radius: 0
@@ -44,10 +45,19 @@
     border-color: rgba(0, 0, 0, 0.12)
     margin: 0
 
+  .q-avatar
+    height: calc(1em - 2px)
+
 .q-card--dense
   .q-card__section--vert
     padding-top: 8px
     padding-bottom: 8px
+
+.q-field--labeled
+  &.q-field--dense
+    input.q-field__native
+      line-height: 18px
+
 
 .column > .q-field.col
   .q-field__inner

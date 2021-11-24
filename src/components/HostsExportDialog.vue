@@ -177,7 +177,7 @@ export default defineComponent({
         },
         certificateSubject: {
           export: true,
-          extract: (row) => (row.certificates.length === 0 ? null : row.certificates[0].subject.CN),
+          extract: (row) => (row.certificates.length === 0 ? null : (row.certificates[0].subject || {}).CN),
         },
         certificateSubjectAltName: {
           export: true,
@@ -185,7 +185,7 @@ export default defineComponent({
         },
         certificateIssuer: {
           export: true,
-          extract: (row) => (row.certificates.length === 0 ? null : row.certificates[0].issuer.CN),
+          extract: (row) => (row.certificates.length === 0 ? null : (row.certificates[0].issuer || {}).CN),
         },
         certificateBits: {
           export: true,
@@ -207,7 +207,7 @@ export default defineComponent({
         },
         certificateIssuersChain: {
           export: true,
-          extract: (row) => row.certificates.map((cert, i) => `[${ i + 1 }] ${ cert.issuer.CN }`).join(' | '),
+          extract: (row) => row.certificates.map((cert, i) => `[${ i + 1 }] ${ (cert.issuer || {}).CN }`).join(' | '),
         },
         certificateValidationHistoryLength: {
           export: true,

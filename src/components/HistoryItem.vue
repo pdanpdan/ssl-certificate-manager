@@ -251,9 +251,9 @@ export default defineComponent({
       const now = Date.now();
       const cert = this.history.certificates[0];
       const data = {
-        subject: cert.subject.CN,
+        subject: (cert.subject || {}).CN,
         subjectAlt: cert.subjectaltname,
-        issuer: cert.issuer.CN,
+        issuer: (cert.issuer || {}).CN,
         bits: cert.bits,
         // eslint-disable-next-line no-nested-ternary
         bitsColor: cert.bits < this.config.certificateBitsError ? 'negative' : (cert.bits < this.config.certificateBitsWarning ? 'warning' : 'positive'),

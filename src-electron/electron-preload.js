@@ -1,6 +1,6 @@
 import { contextBridge } from 'electron';
 import { app } from '@electron/remote';
-import { resolve as pathResolve } from 'path';
+import { resolve as pathResolve, join as pathJoin } from 'path';
 import { readFileSync, writeFileSync } from 'fs';
 import * as initSqlJs from 'sql.js';
 import * as tls from 'tls';
@@ -67,24 +67,27 @@ const certificateChangedKeys = [
 const reExtractError = /^(?:\s*error\s*:)?\s*(.+)/i;
 
 const rootCas = new Set(sslRootCas.create());
-console.info('rootCas:', rootCas.size);
+const rootCaAdd = (cert) => { rootCas.add(cert); };
 
-tls.rootCertificates.forEach((cert) => { rootCas.add(cert); });
-console.info('rootCas + rootCertificates:', rootCas.size);
+tls.rootCertificates.forEach(rootCaAdd);
 
 try {
-  sslWinCa({
-    store: ['root', 'ca'],
-    ondata: (cert) => { rootCas.add(cert); },
-  });
-  console.info('rootCas + winCertificates:', rootCas.size);
+  if (sslWinCa.der2) {
+    sslWinCa.exe(pathJoin(process.resourcesPath, 'win-ca', 'roots.exe'));
+    sslWinCa({
+      store: ['AuthRoot', 'CertificateAuthority', 'My', 'Root', 'TrustedPeople', 'TrustedPublisher'],
+      format: sslWinCa.der2.pem,
+      ondata: rootCaAdd,
+    });
+  }
 } catch (error) {
   console.error(error);
 }
 
 try {
-  sslMacCa.each((cert) => { rootCas.add(cert); });
-  console.info('rootCas + macCertificates:', rootCas.size);
+  if (sslMacCa.der2) {
+    sslMacCa.all(sslMacCa.der2.pem).forEach(rootCaAdd);
+  }
 } catch (error) {
   console.error(error);
 }
@@ -92,8 +95,7 @@ try {
 try {
   sslLinuxCa.getAllCerts()
     .then((certs) => {
-      certs.forEach((cert) => { rootCas.add(cert); });
-      console.info('rootCas + linuxCertificates:', rootCas.size);
+      certs.forEach(rootCaAdd);
     })
     .catch((error) => {
       console.error(error);

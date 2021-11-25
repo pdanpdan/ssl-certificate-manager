@@ -229,6 +229,12 @@ module.exports = configure((ctx) => ({
       appId: 'org.pdanpdan.ssl-certificate-manager',
       productName: 'SSL Certificate Manager',
       copyright: 'Copyright © year Dan Popescu',
+      extraResources: [
+        {
+          from: 'node_modules/win-ca/lib/roots.exe',
+          to: 'win-ca/roots.exe',
+        },
+      ],
     },
 
     // "chain" is a webpack-chain object https://github.com/neutrinojs/webpack-chain

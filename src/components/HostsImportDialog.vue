@@ -160,7 +160,7 @@
 import { defineComponent } from 'vue';
 import { parse as csvParse } from 'csv-parse/sync';
 
-import { getFullHostName } from '../store/hosts/state.js';
+import { getFullHostName } from 'store/hosts/state.js';
 
 export default defineComponent({
   name: 'HostsImportDialog',

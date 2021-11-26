@@ -6,10 +6,10 @@
 // Configuration for your app
 // https://quasar.dev/quasar-cli/quasar-conf-js
 
-/* eslint-env node */
 const ESLintPlugin = require('eslint-webpack-plugin');
-/* eslint func-names: 0 */
 /* eslint global-require: 0 */
+
+const { resolve: pathResolve } = require('path');
 const { configure } = require('quasar/wrappers');
 
 const packageJson = require('./package.json');
@@ -77,12 +77,12 @@ module.exports = configure((ctx) => ({
     // https://quasar.dev/quasar-cli/handling-webpack
     // "chain" is a webpack-chain object https://github.com/neutrinojs/webpack-chain
     chainWebpack(chain) {
-      chain.plugin('eslint-webpack-plugin')
-      .use(ESLintPlugin, [{ extensions: ['js', 'vue'] }]);
+      chain.plugin('eslint-webpack-plugin').use(ESLintPlugin, [{ extensions: ['js', 'vue'] }]);
 
-      const nodePolyfillWebpackPlugin = require('node-polyfill-webpack-plugin');
-      chain.plugin('node-polyfill')
-        .use(nodePolyfillWebpackPlugin);
+      chain.plugin('node-polyfill').use(require('node-polyfill-webpack-plugin'));
+
+      chain.resolve.alias.set('store', pathResolve(__dirname, './src/store'));
+      chain.resolve.alias.set('router', pathResolve(__dirname, './src/router'));
     },
   },
 

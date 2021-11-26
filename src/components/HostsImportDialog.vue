@@ -272,7 +272,9 @@ export default defineComponent({
               .then(() => {
                 this.$q.notify({
                   type: 'positive',
-                  message: this.$t('host.msg_add', { hostname }),
+                  group: 'host-add',
+                  badgePosition: 'top-right',
+                  message: this.$t('host.msg_add'),
                 });
               })
               .catch((error) => {

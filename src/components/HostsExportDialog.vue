@@ -48,15 +48,13 @@
                   <thead>
                     <tr>
                       <th v-for="(colName, i) in columnNames" :key="i">
-                        <div class="row no-wrap items-center q-gutter-x-sm">
-                          <div>{{ colName }}</div>
-
-                          <q-checkbox
-                            v-model="columns[colName].export"
-                            dense
-                            color="primary"
-                          />
-                        </div>
+                        <q-checkbox
+                          v-model="columns[colName].export"
+                          dense
+                          color="primary"
+                          :label="colName"
+                          left-label
+                        />
                       </th>
                     </tr>
                   </thead>

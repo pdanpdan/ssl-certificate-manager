@@ -96,7 +96,7 @@
                   <thead>
                     <tr>
                       <th v-for="(colName, i) in columnNames" :key="i">
-                        <div class="row no-wrap items-center q-gutter-x-sm">
+                        <div class="row no-wrap items-center q-gutter-x-xs">
                           <div>{{ colName }}</div>
 
                           <input

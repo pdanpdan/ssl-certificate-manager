@@ -210,7 +210,7 @@ export default defineComponent({
           extract: (row) => row.certificates.map((cert, i) => `[${ i + 1 }] ${ (cert.issuer || {}).CN }`).join(' | '),
         },
         certificateValidationHistoryLength: {
-          export: true,
+          export: false,
           extract: (row) => row.historyLength,
         },
         certificatePubKey: {

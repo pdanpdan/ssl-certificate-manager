@@ -132,7 +132,7 @@ contextBridge.exposeInMainWorld('sslCertAPI', {
           sqlite.db.run(`
             CREATE TABLE IF NOT EXISTS version (
               id INTEGER PRIMARY KEY,
-              version INTEGER NOT NULL DEFAULT ${ DB_VERSION }
+              version INTEGER NOT NULL ON CONFLICT REPLACE DEFAULT ${ DB_VERSION }
             )
           `);
 
@@ -145,11 +145,11 @@ contextBridge.exposeInMainWorld('sslCertAPI', {
                 CREATE TABLE IF NOT EXISTS hosts (
                   id INTEGER PRIMARY KEY,
                   hostname TEXT NOT NULL,
-                  servername TEXT NOT NULL DEFAULT '',
-                  port INTEGER NOT NULL DEFAULT 443,
-                  description TEXT NOT NULL DEFAULT '',
-                  category TEXT NOT NULL DEFAULT '',
-                  active INTEGER NOT NULL DEFAULT 1,
+                  servername TEXT NOT NULL ON CONFLICT REPLACE DEFAULT '',
+                  port INTEGER NOT NULL ON CONFLICT REPLACE DEFAULT 443,
+                  description TEXT NOT NULL ON CONFLICT REPLACE DEFAULT '',
+                  category TEXT NOT NULL ON CONFLICT REPLACE DEFAULT '',
+                  active INTEGER NOT NULL ON CONFLICT REPLACE DEFAULT 1,
                   idHistory INTEGER DEFAULT NULL
                 )
               `);
@@ -158,8 +158,8 @@ contextBridge.exposeInMainWorld('sslCertAPI', {
                 CREATE TABLE IF NOT EXISTS hosts_history (
                   id INTEGER PRIMARY KEY,
                   idHost INTEGER NOT NULL,
-                  ts DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                  authorized INTEGER NOT NULL DEFAULT 0,
+                  ts DATETIME NOT NULL ON CONFLICT REPLACE DEFAULT CURRENT_TIMESTAMP,
+                  authorized INTEGER NOT NULL ON CONFLICT REPLACE DEFAULT 0,
                   fingerprint TEXT DEFAULT NULL,
                   certificates TEXT DEFAULT NULL,
                   errors TEXT DEFAULT NULL

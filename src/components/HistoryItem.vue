@@ -169,7 +169,7 @@
 
           <q-scroll-area
             class="q-mx-sm"
-            style="height: 20em; max-height: 50vh"
+            style="height: 40em; max-height: 50vh"
           >
             <pre
               class="q-pa-md q-my-none bg-grey-2"

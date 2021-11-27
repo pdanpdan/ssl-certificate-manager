@@ -5,7 +5,15 @@
     persistent
     @hide="onDialogHide"
   >
-    <div class="q-dialog-plugin column no-wrap" style="max-width: 80vw; max-height: 80vh">
+    <div
+      ref="dialogInner"
+      class="q-dialog-plugin relative-position column no-wrap"
+      :class="dndClass"
+      style="max-width: 80vw; max-height: 80vh"
+      @dragover="onInputDragOver"
+      @drop="onInputDrop"
+      @dragleave="onInputDragLeave"
+    >
       <q-form class="col column no-wrap" @submit="onOkClick">
         <q-card class="col column no-wrap" square>
           <q-card-section class="bg-primary text-white q-mb-md" horizontal>
@@ -100,7 +108,7 @@
                           <div>{{ colName }}</div>
 
                           <input
-                            class="import-table__column-input"
+                            class="import-table-column-input"
                             v-model.number="columns[colName]"
                             type="number"
                             :min="0"
@@ -174,6 +182,8 @@ export default defineComponent({
       source: '',
       parsed: [],
 
+      dndStatus: false,
+
       columns: {
         hostname: 1,
         category: 2,
@@ -185,6 +195,10 @@ export default defineComponent({
   },
 
   computed: {
+    dndClass() {
+      return this.dndStatus ? 'import__source-input' : undefined;
+    },
+
     columnNames() {
       return Object.keys(this.columns);
     },
@@ -304,6 +318,51 @@ export default defineComponent({
       this.hide();
     },
 
+    onInputDragOver(event) {
+      event.stopPropagation();
+      event.preventDefault();
+
+      event.dataTransfer.dropEffect = 'copy';
+
+      if (this.dndStatus !== true) {
+        this.dndStatus = true;
+      }
+
+      clearTimeout(this.cancelInputDragLeave);
+    },
+
+    async onInputDrop(event) {
+      event.stopPropagation();
+      event.preventDefault();
+
+      this.dndStatus = false;
+
+      const item = event.dataTransfer.items[0];
+
+      if (!item || item.kind !== 'file') {
+        return;
+      }
+
+      try {
+        const entry = await item.getAsFileSystemHandle();
+
+        if (entry.kind !== 'directory') {
+          const file = await entry.getFile();
+          this.source = await file.text();
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    },
+
+    onInputDragLeave() {
+      clearTimeout(this.cancelInputDragLeave);
+
+      this.cancelInputDragLeave = setTimeout(() => {
+        this.dndStatus = false;
+      }, 50);
+    },
+
     processRows() {
       this.parsed = csvParse(this.source, {
         delimiter: [';', ','],
@@ -314,6 +373,10 @@ export default defineComponent({
         trim: true,
       });
     },
+  },
+
+  beforeUnmount() {
+    clearTimeout(this.cancelInputDragLeave);
   },
 });
 </script>

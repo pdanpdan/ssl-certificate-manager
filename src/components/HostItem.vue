@@ -71,6 +71,24 @@
 
             <q-space />
 
+            <template v-if="computedDetailed !== true && certificateData">
+              <q-badge
+                v-if="certificateData.validFromExpired"
+                class="q-badge--host"
+                color="negative"
+                outline
+                :label="certificateData.validFromExpireLabel"
+              />
+
+              <q-badge
+                v-else
+                class="q-badge--host"
+                :color="certificateData.validToExpired ? 'negative' : (certificateData.validToAboutToExpire ? 'warning' : 'positive')"
+                outline
+                :label="certificateData.validToExpireLabel"
+              />
+            </template>
+
             <q-badge
               class="q-badge--host"
               color="dark"
@@ -242,7 +260,7 @@ import { mapState, mapActions } from 'vuex';
 
 import HostEdit from 'components/HostEditDialog.vue';
 import HistoryItem from 'components/HistoryItem.vue';
-import { getFullHostName } from 'store/hosts/state.js';
+import { getFullHostName, getAuthorizedStateProps, getCertificateData } from 'store/hosts/state.js';
 
 export default defineComponent({
   name: 'HostItemComponent',
@@ -283,31 +301,7 @@ export default defineComponent({
     },
 
     authorizedStateProps() {
-      if (this.host.authorized === null) {
-        return {
-          avatar: {
-            icon: 'gpp_maybe',
-            color: 'grey-6',
-          },
-          tooltip: this.$t('certificate.not_checked'),
-        };
-      }
-
-      return this.host.authorized === 0
-        ? {
-          avatar: {
-            icon: 'gpp_bad',
-            color: 'negative',
-          },
-          tooltip: this.$t('certificate.invalid'),
-        }
-        : {
-          avatar: {
-            icon: 'gpp_good',
-            color: 'positive',
-          },
-          tooltip: this.$t('certificate.valid'),
-        };
+      return getAuthorizedStateProps(this.host.authorized, this.$t);
     },
 
     authorizedTimeProps() {
@@ -374,6 +368,10 @@ export default defineComponent({
           },
           dense: true,
         };
+    },
+
+    certificateData() {
+      return getCertificateData(this.host.certificates, this.config, this.$t, this.$tc);
     },
   },
 

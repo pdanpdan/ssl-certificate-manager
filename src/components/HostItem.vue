@@ -3,9 +3,8 @@
     <q-card-section horizontal>
       <q-card-actions vertical :class="actionsAlign">
         <q-checkbox
-          :style="detailed ? undefined : 'padding-left: 10px; padding-right: 10px'"
           :model-value="host.selected"
-          :dense="detailed !== true"
+          v-bind="selectionProps"
           color="primary"
           :disable="processing || locked || host.active !== 1"
           @update:model-value="selectHost"
@@ -27,7 +26,7 @@
           <q-tooltip>{{ $t('host.tooltip_validate') }}</q-tooltip>
         </div>
 
-        <template v-if="detailed && host.historyLength > 1">
+        <template v-if="computedDetailed === true && host.historyLength > 1">
           <q-separator spaced />
 
           <div>
@@ -72,6 +71,24 @@
 
             <q-space />
 
+            <template v-if="computedDetailed !== true && certificateData">
+              <q-badge
+                v-if="certificateData.validFromExpired"
+                class="q-badge--host"
+                color="negative"
+                outline
+                :label="certificateData.validFromExpireLabel"
+              />
+
+              <q-badge
+                v-else
+                class="q-badge--host"
+                :color="certificateData.validToExpired ? 'negative' : (certificateData.validToAboutToExpire ? 'warning' : 'positive')"
+                outline
+                :label="certificateData.validToExpireLabel"
+              />
+            </template>
+
             <q-badge
               class="q-badge--host"
               color="dark"
@@ -87,7 +104,7 @@
             </q-badge>
 
             <q-badge
-              v-if="detailed !== true"
+              v-if="computedDetailed !== true"
               class="q-badge--host"
               color="dark"
               outline
@@ -108,7 +125,7 @@
             </q-badge>
           </div>
 
-          <template v-if="detailed">
+          <template v-if="computedDetailed === true">
             <div class="q-mt-none row no-wrap items-center q-list__separator--history">
               <q-separator class="col q-my-lg" />
 
@@ -152,70 +169,84 @@
       <q-separator vertical />
 
       <q-card-actions vertical :class="actionsAlign">
-        <template v-if="host.active === 1">
-          <div>
-            <q-btn
-              v-bind="actionProps"
-              color="primary"
-              icon="settings"
-              :disable="processing || locked"
-              @click="editHost"
-            />
-            <q-tooltip>{{ $t('host.tooltip_edit') }}</q-tooltip>
-          </div>
+        <div v-if="detailed !== true">
+          <q-btn
+            v-bind="actionProps"
+            color="primary"
+            :icon="localDetailed ? 'view_headline' : 'view_agenda'"
+            @click="localDetailed = localDetailed !== true"
+          />
+          <q-tooltip>{{ $t(`host.tooltip_view_${ localDetailed ? 'dense' : 'detailed' }`) }}</q-tooltip>
+        </div>
 
-          <template v-if="detailed">
-            <q-separator spaced />
+        <template v-if="computedDetailed">
+          <q-separator v-if="detailed !== true" spaced />
 
-            <div v-if="host.historyLength > 0">
-              <q-btn
-                v-bind="actionProps"
-                color="negative"
-                icon="archive"
-                :disable="processing || locked"
-                @click="archiveHost"
-              />
-              <q-tooltip>{{ $t('host.tooltip_archive') }}</q-tooltip>
-            </div>
-
-            <div v-else>
-              <q-btn
-                v-bind="actionProps"
-                color="negative"
-                icon="delete_outline"
-                :disable="processing || locked"
-                @click="deleteHost"
-              />
-              <q-tooltip>{{ $t('host.tooltip_delete') }}</q-tooltip>
-            </div>
-          </template>
-        </template>
-
-        <template v-else>
-          <div>
-            <q-btn
-              v-bind="actionProps"
-              color="positive"
-              icon="unarchive"
-              :disable="processing || locked"
-              @click="unarchiveHost"
-            />
-            <q-tooltip>{{ $t('host.tooltip_unarchive') }}</q-tooltip>
-          </div>
-
-          <template v-if="detailed && host.historyLength === 0">
-            <q-separator spaced />
-
+          <template v-if="host.active === 1">
             <div>
               <q-btn
                 v-bind="actionProps"
-                color="negative"
-                icon="delete"
+                color="primary"
+                icon="settings"
                 :disable="processing || locked"
-                @click="deleteHost"
+                @click="editHost"
               />
-              <q-tooltip>{{ $t('host.tooltip_delete') }}</q-tooltip>
+              <q-tooltip>{{ $t('host.tooltip_edit') }}</q-tooltip>
             </div>
+
+            <template v-if="computedDetailed === true">
+              <q-separator spaced />
+
+              <div v-if="host.historyLength > 0">
+                <q-btn
+                  v-bind="actionProps"
+                  color="negative"
+                  icon="archive"
+                  :disable="processing || locked"
+                  @click="archiveHost"
+                />
+                <q-tooltip>{{ $t('host.tooltip_archive') }}</q-tooltip>
+              </div>
+
+              <div v-else>
+                <q-btn
+                  v-bind="actionProps"
+                  color="negative"
+                  icon="delete_outline"
+                  :disable="processing || locked"
+                  @click="deleteHost"
+                />
+                <q-tooltip>{{ $t('host.tooltip_delete') }}</q-tooltip>
+              </div>
+            </template>
+          </template>
+
+          <template v-else>
+            <div>
+              <q-btn
+                v-bind="actionProps"
+                color="positive"
+                icon="unarchive"
+                :disable="processing || locked"
+                @click="unarchiveHost"
+              />
+              <q-tooltip>{{ $t('host.tooltip_unarchive') }}</q-tooltip>
+            </div>
+
+            <template v-if="computedDetailed === true && host.historyLength === 0">
+              <q-separator spaced />
+
+              <div>
+                <q-btn
+                  v-bind="actionProps"
+                  color="negative"
+                  icon="delete"
+                  :disable="processing || locked"
+                  @click="deleteHost"
+                />
+                <q-tooltip>{{ $t('host.tooltip_delete') }}</q-tooltip>
+              </div>
+            </template>
           </template>
         </template>
       </q-card-actions>
@@ -229,7 +260,7 @@ import { mapState, mapActions } from 'vuex';
 
 import HostEdit from 'components/HostEditDialog.vue';
 import HistoryItem from 'components/HistoryItem.vue';
-import { getFullHostName } from '../store/hosts/state.js';
+import { getFullHostName, getAuthorizedStateProps, getCertificateData } from 'store/hosts/state.js';
 
 export default defineComponent({
   name: 'HostItemComponent',
@@ -253,6 +284,8 @@ export default defineComponent({
     return {
       processing: false,
 
+      localDetailed: false,
+
       showHistory: false,
       history: [],
     };
@@ -263,32 +296,12 @@ export default defineComponent({
       'config',
     ]),
 
-    authorizedStateProps() {
-      if (this.host.authorized === null) {
-        return {
-          avatar: {
-            icon: 'gpp_maybe',
-            color: 'grey-6',
-          },
-          tooltip: this.$t('certificate.not_checked'),
-        };
-      }
+    computedDetailed() {
+      return this.detailed === true || this.localDetailed === true;
+    },
 
-      return this.host.authorized === 0
-        ? {
-          avatar: {
-            icon: 'gpp_bad',
-            color: 'negative',
-          },
-          tooltip: this.$t('certificate.invalid'),
-        }
-        : {
-          avatar: {
-            icon: 'gpp_good',
-            color: 'positive',
-          },
-          tooltip: this.$t('certificate.valid'),
-        };
+    authorizedStateProps() {
+      return getAuthorizedStateProps(this.host.authorized, this.$t);
     },
 
     authorizedTimeProps() {
@@ -327,11 +340,11 @@ export default defineComponent({
     },
 
     actionsAlign() {
-      return this.detailed ? 'justify-start' : 'justify-center';
+      return this.computedDetailed === true ? 'justify-start' : 'justify-center';
     },
 
     actionProps() {
-      return this.detailed
+      return this.computedDetailed === true
         ? {
           size: 'lg',
           padding: 'xs',
@@ -343,6 +356,22 @@ export default defineComponent({
           flat: true,
           style: 'margin-left: 5px; margin-right: 5px',
         };
+    },
+
+    selectionProps() {
+      return this.computedDetailed === true
+        ? {}
+        : {
+          style: {
+            paddingLeft: '10px',
+            paddingRight: '10px',
+          },
+          dense: true,
+        };
+    },
+
+    certificateData() {
+      return getCertificateData(this.host.certificates, this.config, this.$t, this.$tc);
     },
   },
 
@@ -358,6 +387,10 @@ export default defineComponent({
             this.history = [];
           });
       }
+    },
+
+    detailed() {
+      this.localDetailed = false;
     },
   },
 

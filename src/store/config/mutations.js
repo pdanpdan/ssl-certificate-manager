@@ -1,3 +1,5 @@
+import { LocalStorage } from 'quasar';
+
 import { defaultConfig } from './state.js';
 
 export function SET_CONFIG(state, config) {
@@ -6,4 +8,6 @@ export function SET_CONFIG(state, config) {
     ...state.config,
     ...config,
   };
+
+  LocalStorage.set('config', state.config);
 }

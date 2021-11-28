@@ -120,6 +120,7 @@
 
               <div class="row items-center q-gutter-x-sm">
                 <q-input
+                  ref="filterField"
                   class="col"
                   v-model="filters.search"
                   standout
@@ -140,7 +141,15 @@
                   color="primary"
                   toggle-color="accent"
                   :options="viewDetailedOptions"
-                />
+                >
+                  <template
+                    v-for="option in viewDetailedOptions"
+                    :key="option.slot"
+                    v-slot:[option.slot]
+                  >
+                    <q-tooltip>{{ $t(option.tooltip) }}</q-tooltip>
+                  </template>
+                </q-btn-toggle>
               </div>
             </div>
           </q-card-section>
@@ -207,7 +216,7 @@
             class="q-mx-md"
             :class="filters.viewDetailed ? 'q-my-lg' : 'q-my-xs q-card--dense'"
             :host="host"
-            :locked="processing.includes(host)"
+            :locked="processing.includes(host.id)"
             :detailed="filters.viewDetailed"
           />
         </template>
@@ -237,8 +246,18 @@ export default defineComponent({
       processing: [],
 
       viewDetailedOptions: [
-        { icon: 'view_headline', value: false },
-        { icon: 'view_agenda', value: true },
+        {
+          icon: 'view_headline',
+          value: false,
+          slot: 's1',
+          tooltip: 'host.tooltip_view_dense',
+        },
+        {
+          icon: 'view_agenda',
+          value: true,
+          slot: 's2',
+          tooltip: 'host.tooltip_view_detailed',
+        },
       ],
     };
   },
@@ -322,25 +341,28 @@ export default defineComponent({
     },
 
     verifySelectedHosts() {
-      this.processing = this.filteredSelectedHosts.slice();
+      this.processing = this.filteredSelectedHosts.map((h) => h.id);
 
       const hostsClones = this.filteredSelectedHosts.map((h) => JSON.parse(JSON.stringify(h)));
 
       return hostsClones
         .reduce(
-          (acc, host) => acc.then(
-            () => window.sslCertAPI
-              .verifyHost(host)
-              .then((history) => window.sslCertAPI.writeHostHistory(host, history))
-              .catch(() => {})
-              .then(() => {
-                this.processing = this.processing.filter((h) => h.id !== host.id);
-              }),
-          ),
+          (acc, host) => acc.then(() => window.sslCertAPI
+            .verifyHost(host)
+            .then((history) => window.sslCertAPI.writeHostHistory(host, history))
+            .catch(() => {})
+            .then(() => {
+              const srcHost = this.hosts.find((h) => h.id === host.id);
+
+              if (srcHost) {
+                this.$store.dispatch('hosts/selectHost', { host: srcHost, selected: false });
+              }
+
+              this.readHosts();
+              this.processing = this.processing.filter((hId) => hId !== host.id);
+            })),
           Promise.resolve(),
         ).then(() => {
-          this.readHosts();
-
           this.processing = [];
         });
     },
@@ -350,10 +372,22 @@ export default defineComponent({
         height: `${ height - offset }px`,
       };
     },
+
+    onKeyDown(evt) {
+      if ((evt.metaKey === true || evt.ctrlKey === true) && evt.code === 'KeyF' && this.$refs.filterField) {
+        this.$refs.filterField.focus();
+        evt.preventDefault();
+      }
+    },
   },
 
   mounted() {
     this.readHosts();
+    window.addEventListener('keydown', this.onKeyDown, true);
+  },
+
+  beforeUnmount() {
+    window.removeEventListener('keydown', this.onKeyDown, true);
   },
 });
 </script>

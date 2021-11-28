@@ -9,7 +9,7 @@ const routes = [
   {
     path: '/:catchAll(.*)*',
     name: 'error',
-    component: () => import('pages/Error404.vue'),
+    component: () => import('pages/ErrorPage404.vue'),
   },
 ];
 

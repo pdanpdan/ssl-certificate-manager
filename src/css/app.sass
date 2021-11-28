@@ -6,6 +6,7 @@
 .q-btn-group,
 .q-badge,
 .q-chip,
+.q-chip .q-avatar,
 .q-tooltip,
 .q-dialog__inner > .q-dialog-plugin
   border-radius: 0
@@ -44,10 +45,19 @@
     border-color: rgba(0, 0, 0, 0.12)
     margin: 0
 
+  .q-avatar
+    height: calc(1em - 2px)
+
 .q-card--dense
   .q-card__section--vert
     padding-top: 8px
     padding-bottom: 8px
+
+.q-field--labeled
+  &.q-field--dense
+    input.q-field__native
+      line-height: 18px
+
 
 .column > .q-field.col
   .q-field__inner
@@ -71,12 +81,27 @@
   .q-badge:last-child
     margin-right: -16px
 
-.import-table__column-input
-  text-align: right
-  border: none
-  padding-top: 2px
-  padding-bottom: 2px
-  background: $grey-2
+.import
+  &__table-column-input
+    text-align: right
+    border: none
+    padding-top: 4px
+    padding-bottom: 3px
+    background: $grey-2
+
+  &__source-input
+    outline: 4px dashed $accent
+
+    &::after
+      content: ''
+      pointer-events: none
+      position: absolute
+      top: 0
+      bottom: 0
+      left: 0
+      right: 0
+      background-color: $accent
+      opacity: .3
 
 .export__column-content
   max-width: 60em

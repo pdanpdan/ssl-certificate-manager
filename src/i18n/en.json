@@ -34,6 +34,7 @@
     "label_certificate_about_to_expire_days_warning": "How many days before cert expiration to show warning",
     "label_certificate_bits_error": "Maximum number of key bits to show error",
     "label_certificate_bits_warning": "Maximum number of key bits to show warning",
+    "label_db_location": "Database file path",
     "label_verification_days_error": "How many days after cert validation to show error",
     "label_verification_days_warning": "How many days after cert validation to show warning",
     "msg_save": "The configuration was saved",
@@ -48,6 +49,10 @@
     "btn_cancel": "Cancel",
     "btn_export": "Export hosts",
     "label_hosts": "Hosts - columns to export",
+    "msg_copy": "The data was copied to clipboard",
+    "msg_copy_error": "Error copying the data to clipboard: {error}",
+    "msg_save": "The file was saved",
+    "msg_save_error": "Error saving the file: {error}",
     "title_export": "Export hosts to CSV"
   },
   "host": {
@@ -68,7 +73,7 @@
     "label_hostname": "Host name",
     "label_port": "Port",
     "label_servername": "Named used by the service",
-    "msg_add": "Host {hostname} added",
+    "msg_add": "Host added",
     "msg_add_error": "Error adding host {hostname}: {error}",
     "msg_update": "Host {hostname} updated",
     "msg_update_error": "Error updating host {hostname}: {error}",
@@ -88,12 +93,14 @@
     "tooltip_unarchive": "Unarchive host",
     "tooltip_unselect_all": "Unselect all visible hosts",
     "tooltip_validate": "Validate host",
-    "tooltip_validate_selected": "Validate all selected hosts"
+    "tooltip_validate_selected": "Validate all selected hosts",
+    "tooltip_view_dense": "Dense (one line) hosts view",
+    "tooltip_view_detailed": "Detailed hosts view"
   },
   "import": {
     "btn_cancel": "Cancel",
     "btn_import": "Import hosts",
-    "hint_source": "CSV with columns 'host name' (mandatory), 'port', 'server name', 'description', and 'category' - delimited by ';' or ',",
+    "hint_source": "CSV with columns 'host name' (mandatory), 'category', 'description', 'server name', and 'port' - delimited by ';' or ',",
     "label_column_nr": "Column #{column}",
     "label_column_nr_for": "Column number for '{column}'",
     "label_parsed": "Found columns",

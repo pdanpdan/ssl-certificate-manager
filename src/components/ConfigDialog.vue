@@ -24,19 +24,42 @@
           </q-card-section>
 
           <q-card-section class="column no-wrap q-gutter-y-sm">
-            <q-input
-              v-for="conf in options"
+            <template
+              v-for="(conf, i) in options"
               :key="conf.key"
-              v-model.number="config[conf.key]"
-              type="number"
+            >
+              <q-input
+                v-if="conf.number"
+                v-model.number="config[conf.key]"
+                type="number"
+                outlined
+                square
+                color="primary"
+                input-class="text-right"
+                :min="0"
+                :step="1"
+                :autofocus="i === 0"
+                :label="$t(conf.label)"
+              />
+
+              <q-input
+                v-else
+                v-model="config[conf.key]"
+                outlined
+                square
+                color="primary"
+                :autofocus="i === 0"
+                :label="$t(conf.label)"
+              />
+            </template>
+
+            <q-input
+              :model-value="dbLocation"
               outlined
               square
               color="primary"
-              input-class="text-right"
-              :min="0"
-              :step="1"
-              autofocus
-              :label="$t(conf.label)"
+              readonly
+              :label="$t('config.label_db_location')"
             />
           </q-card-section>
 
@@ -79,26 +102,33 @@ export default defineComponent({
     return {
       processing: false,
 
+      dbLocation: null,
+
       options: [
         {
           key: 'verificationDaysError',
           label: 'config.label_verification_days_error',
+          number: true,
         },
         {
           key: 'verificationDaysWarning',
           label: 'config.label_verification_days_warning',
+          number: true,
         },
         {
           key: 'certificateBitsError',
           label: 'config.label_certificate_bits_error',
+          number: true,
         },
         {
           key: 'certificateBitsWarning',
           label: 'config.label_certificate_bits_warning',
+          number: true,
         },
         {
           key: 'certificateAboutToExpireDaysWarning',
           label: 'config.label_certificate_about_to_expire_days_warning',
+          number: true,
         },
       ],
 
@@ -114,6 +144,8 @@ export default defineComponent({
     ]),
 
     show() {
+      this.dbLocation = window.sslCertAPI.getDbLocation();
+
       this.$refs.dialog.show();
     },
 

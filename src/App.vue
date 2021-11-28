@@ -113,7 +113,6 @@ export default defineComponent({
   beforeMount() {
     window.sslCertAPI
       .openDb()
-      .then(() => this.$store.dispatch('config/readConfig'))
       .catch((err) => {
         console.error('[sqlite] open:', err);
       });

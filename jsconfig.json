@@ -23,14 +23,25 @@
       "boot/*": [
         "src/boot/*"
       ],
+      "store/*": [
+        "src/store/*"
+      ],
+      "router/*": [
+        "src/router/*"
+      ],
       "vue$": [
         "node_modules/vue/dist/vue.runtime.esm-bundler.js"
       ]
     }
   },
   "exclude": [
-    "dist",
+    ".git",
+    ".github",
+    ".gtm",
     ".quasar",
-    "node_modules"
+    "node_modules",
+    "public",
+    "dist",
+    "temp"
   ]
 }

@@ -5,7 +5,15 @@
     persistent
     @hide="onDialogHide"
   >
-    <div class="q-dialog-plugin column no-wrap" style="max-width: 80vw; max-height: 80vh">
+    <div
+      ref="dialogInner"
+      class="q-dialog-plugin relative-position column no-wrap"
+      :class="dndClass"
+      style="max-width: 80vw; max-height: 80vh"
+      @dragover="onInputDragOver"
+      @drop="onInputDrop"
+      @dragleave="onInputDragLeave"
+    >
       <q-form class="col column no-wrap" @submit="onOkClick">
         <q-card class="col column no-wrap" square>
           <q-card-section class="bg-primary text-white q-mb-md" horizontal>
@@ -61,7 +69,7 @@
                 >
                   <thead>
                     <tr>
-                      <th v-for="colNr in parsedColumnsLength" :key="colNr">{{ $t('import.label_column_nr', { colNr }) }}</th>
+                      <th v-for="colNr in parsedColumnsLength" :key="colNr">{{ $t('import.label_column_nr', { column: colNr }) }}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -96,16 +104,26 @@
                   <thead>
                     <tr>
                       <th v-for="(colName, i) in columnNames" :key="i">
-                        <div class="row no-wrap items-center q-gutter-x-sm">
+                        <div class="row no-wrap items-center q-gutter-x-xs">
                           <div>{{ colName }}</div>
 
                           <input
-                            class="import-table__column-input"
+                            class="import-table-column-input"
                             v-model.number="columns[colName]"
                             type="number"
-                            :min="1"
+                            :min="0"
                             :max="parsedColumnsLength"
                             :step="1"
+                          />
+
+                          <q-btn
+                            flat
+                            square
+                            size="sm"
+                            padding="xs"
+                            color="primary"
+                            icon="clear"
+                            @click="columns[colName] = 0"
                           />
                         </div>
                       </th>
@@ -150,7 +168,7 @@
 import { defineComponent } from 'vue';
 import { parse as csvParse } from 'csv-parse/sync';
 
-import { getFullHostName } from '../store/hosts/state.js';
+import { getFullHostName } from 'store/hosts/state.js';
 
 export default defineComponent({
   name: 'HostsImportDialog',
@@ -164,17 +182,23 @@ export default defineComponent({
       source: '',
       parsed: [],
 
+      dndStatus: false,
+
       columns: {
         hostname: 1,
-        port: 2,
-        servername: 3,
-        description: 4,
-        category: 5,
+        category: 2,
+        description: 3,
+        servername: 4,
+        port: 5,
       },
     };
   },
 
   computed: {
+    dndClass() {
+      return this.dndStatus ? 'import__source-input' : undefined;
+    },
+
     columnNames() {
       return Object.keys(this.columns);
     },
@@ -214,6 +238,16 @@ export default defineComponent({
     source() {
       this.processRows();
     },
+
+    parsedColumnsLength(len) {
+      this.columnNames.forEach((colName, colNr) => {
+        if (this.columns[colName] > len) {
+          this.columns[colName] = 0;
+        } else if (this.columns[colName] === 0) {
+          this.columns[colName] = colNr + 1;
+        }
+      });
+    },
   },
 
   methods: {
@@ -252,7 +286,9 @@ export default defineComponent({
               .then(() => {
                 this.$q.notify({
                   type: 'positive',
-                  message: this.$t('host.msg_add', { hostname }),
+                  group: 'host-add',
+                  badgePosition: 'top-right',
+                  message: this.$t('host.msg_add'),
                 });
               })
               .catch((error) => {
@@ -282,6 +318,51 @@ export default defineComponent({
       this.hide();
     },
 
+    onInputDragOver(event) {
+      event.stopPropagation();
+      event.preventDefault();
+
+      event.dataTransfer.dropEffect = 'copy';
+
+      if (this.dndStatus !== true) {
+        this.dndStatus = true;
+      }
+
+      clearTimeout(this.cancelInputDragLeave);
+    },
+
+    async onInputDrop(event) {
+      event.stopPropagation();
+      event.preventDefault();
+
+      this.dndStatus = false;
+
+      const item = event.dataTransfer.items[0];
+
+      if (!item || item.kind !== 'file') {
+        return;
+      }
+
+      try {
+        const entry = await item.getAsFileSystemHandle();
+
+        if (entry.kind !== 'directory') {
+          const file = await entry.getFile();
+          this.source = await file.text();
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    },
+
+    onInputDragLeave() {
+      clearTimeout(this.cancelInputDragLeave);
+
+      this.cancelInputDragLeave = setTimeout(() => {
+        this.dndStatus = false;
+      }, 50);
+    },
+
     processRows() {
       this.parsed = csvParse(this.source, {
         delimiter: [';', ','],
@@ -292,6 +373,10 @@ export default defineComponent({
         trim: true,
       });
     },
+  },
+
+  beforeUnmount() {
+    clearTimeout(this.cancelInputDragLeave);
   },
 });
 </script>

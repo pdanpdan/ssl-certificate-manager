@@ -169,7 +169,7 @@
 
           <q-scroll-area
             class="q-mx-sm"
-            style="height: 20em; max-height: 50vh"
+            style="height: 40em; max-height: 50vh"
           >
             <pre
               class="q-pa-md q-my-none bg-grey-2"
@@ -184,10 +184,9 @@
 
 <script>
 import { defineComponent } from 'vue';
-import { date } from 'quasar';
 import { mapState } from 'vuex';
 
-const { formatDate } = date;
+import { getAuthorizedStateProps, getCertificateData } from 'store/hosts/state.js';
 
 export default defineComponent({
   name: 'HistoryItemComponent',
@@ -216,99 +215,11 @@ export default defineComponent({
     ]),
 
     authorizedStateProps() {
-      if (this.history.authorized === null) {
-        return {
-          avatar: {
-            icon: 'gpp_maybe',
-            color: 'grey-6',
-          },
-          tooltip: this.$t('certificate.not_checked'),
-        };
-      }
-
-      return this.history.authorized === 0
-        ? {
-          avatar: {
-            icon: 'gpp_bad',
-            color: 'negative',
-          },
-          tooltip: this.$t('certificate.invalid'),
-        }
-        : {
-          avatar: {
-            icon: 'gpp_good',
-            color: 'positive',
-          },
-          tooltip: this.$t('certificate.valid'),
-        };
+      return getAuthorizedStateProps(this.history.authorized, this.$t);
     },
 
     certificateData() {
-      if (Array.isArray(this.history.certificates) !== true || this.history.certificates.length === 0) {
-        return undefined;
-      }
-
-      const now = Date.now();
-      const cert = this.history.certificates[0];
-      const data = {
-        subject: cert.subject.CN,
-        subjectAlt: cert.subjectaltname,
-        issuer: cert.issuer.CN,
-        bits: cert.bits,
-        // eslint-disable-next-line no-nested-ternary
-        bitsColor: cert.bits < this.config.certificateBitsError ? 'negative' : (cert.bits < this.config.certificateBitsWarning ? 'warning' : 'positive'),
-        // eslint-disable-next-line no-nested-ternary
-        bitsTooltip: this.$t(`certificate.tooltip_bits_${ cert.bits < this.config.certificateBitsError ? 'low' : (cert.bits < this.config.certificateBitsWarning ? 'medium' : 'high') }`),
-        validFrom: (new Date(cert.valid_from)).valueOf(),
-        validTo: (new Date(cert.valid_to)).valueOf(),
-      };
-
-      if (Number.isNaN(data.validFrom)) {
-        data.validFromText = 'N/A';
-        data.validFromExpired = false;
-        data.validFromExpireLabel = 'N/A';
-      } else {
-        data.validFromText = formatDate(data.validFrom, 'YYYY-MM-DD HH:mm:ss Z');
-        data.validFromExpired = data.validFrom > now;
-        data.validFromExpireLabel = data.validFromExpired ? this.$t('certificate.expire_not_yet_valid') : this.$t('certificate.valid');
-      }
-
-      if (Number.isNaN(data.validTo)) {
-        data.validToText = 'N/A';
-        data.validToExpired = false;
-        data.validToAboutToExpire = false;
-        data.validToExpireLabel = 'N/A';
-      } else {
-        data.validToText = formatDate(data.validTo, 'YYYY-MM-DD HH:mm:ss Z');
-        data.validToExpired = data.validTo < now;
-        data.validToAboutToExpire = false;
-
-        if (data.validToExpired) {
-          data.validToExpireLabel = this.$t('certificate.expire_expired');
-        } else {
-          const diffDays = Math.floor((data.validTo - now) / this.config.durationDay);
-
-          if (diffDays < this.config.certificateAboutToExpireDaysWarning) {
-            data.validToAboutToExpire = true;
-          }
-
-          let diff = Math.floor(diffDays / 365);
-          if (diff > 0) {
-            data.validToExpireLabel = `${ this.$t('certificate.expire_after') } ${ this.$tc('certificate.expire_years', diff) }`;
-          } else {
-            diff = Math.floor(diffDays / 31);
-            if (diff > 0) {
-              data.validToExpireLabel = `${ this.$t('certificate.expire_after') } ${ this.$tc('certificate.expire_months', diff) }`;
-            } else if (diffDays > 0) {
-              data.validToExpireLabel = `${ this.$t('certificate.expire_after') } ${ this.$tc('certificate.expire_days', diffDays) }`;
-            } else {
-              data.validToExpireLabel = this.$t('certificate.expire_today');
-            }
-          }
-        }
-      }
-
-      return data;
+      return getCertificateData(this.history.certificates, this.config, this.$t, this.$tc);
     },
   },
 });

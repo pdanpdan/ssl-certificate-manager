@@ -28,7 +28,7 @@
             </q-card-actions>
           </q-card-section>
 
-          <q-card-section class="col column">
+          <q-card-section class="col column relative-position">
             <q-field
               class="col"
               outlined
@@ -48,15 +48,13 @@
                   <thead>
                     <tr>
                       <th v-for="(colName, i) in columnNames" :key="i">
-                        <div class="row no-wrap items-center q-gutter-x-sm">
-                          <div>{{ colName }}</div>
-
-                          <q-checkbox
-                            v-model="columns[colName].export"
-                            dense
-                            color="primary"
-                          />
-                        </div>
+                        <q-checkbox
+                          v-model="columns[colName].export"
+                          dense
+                          color="primary"
+                          :label="colName"
+                          left-label
+                        />
                       </th>
                     </tr>
                   </thead>
@@ -73,6 +71,17 @@
                 </q-markup-table>
               </q-scroll-area>
             </q-field>
+
+            <q-btn
+              class="absolute-bottom-right q-ma-md"
+              flat
+              square
+              color="primary"
+              size="md"
+              padding="sm"
+              icon="content_copy"
+              @click="onCopyClick"
+            />
           </q-card-section>
 
           <q-card-actions align="between">
@@ -102,7 +111,7 @@
 
 <script>
 import { defineComponent } from 'vue';
-import { exportFile } from 'quasar';
+import { copyToClipboard, exportFile } from 'quasar';
 import { stringify as csvStringify } from 'csv-stringify/browser/esm/sync.js';
 import { mapGetters } from 'vuex';
 
@@ -166,7 +175,7 @@ export default defineComponent({
         },
         certificateSubject: {
           export: true,
-          extract: (row) => (row.certificates.length === 0 ? null : row.certificates[0].subject.CN),
+          extract: (row) => (row.certificates.length === 0 ? null : (row.certificates[0].subject || {}).CN),
         },
         certificateSubjectAltName: {
           export: true,
@@ -174,7 +183,7 @@ export default defineComponent({
         },
         certificateIssuer: {
           export: true,
-          extract: (row) => (row.certificates.length === 0 ? null : row.certificates[0].issuer.CN),
+          extract: (row) => (row.certificates.length === 0 ? null : (row.certificates[0].issuer || {}).CN),
         },
         certificateBits: {
           export: true,
@@ -196,10 +205,10 @@ export default defineComponent({
         },
         certificateIssuersChain: {
           export: true,
-          extract: (row) => row.certificates.map((cert, i) => `[${ i + 1 }] ${ cert.issuer.CN }`).join(' | '),
+          extract: (row) => row.certificates.map((cert, i) => `[${ i + 1 }] ${ (cert.issuer || {}).CN }`).join(' | '),
         },
         certificateValidationHistoryLength: {
-          export: true,
+          export: false,
           extract: (row) => row.historyLength,
         },
         certificatePubKey: {
@@ -265,15 +274,52 @@ export default defineComponent({
         header: true,
       });
 
-      exportFile(`ssl_cert_manager_hosts_${ Date.now() }.csv`, csv, {
+      const status = exportFile(`ssl_cert_manager_hosts_${ Date.now() }.csv`, csv, {
         encoding: 'utf-8',
         mimeType: 'text/csv;charset=utf-8;',
       });
+
+      if (status === true) {
+        this.$q.notify({
+          type: 'positive',
+          message: this.$t('export.msg_save'),
+        });
+      } else {
+        console.error(status);
+
+        this.$q.notify({
+          type: 'negative',
+          message: this.$t('export.msg_save_error', { error: status }),
+        });
+      }
 
       this.processing = false;
 
       this.$emit('ok');
       this.hide();
+    },
+
+    onCopyClick() {
+      const csv = csvStringify(this.rows, {
+        delimiter: ';',
+        header: true,
+      });
+
+      copyToClipboard(csv)
+        .then(() => {
+          this.$q.notify({
+            type: 'positive',
+            message: this.$t('export.msg_copy'),
+          });
+        })
+        .catch((error) => {
+          console.error(error);
+
+          this.$q.notify({
+            type: 'negative',
+            message: this.$t('export.msg_copy_error', { error }),
+          });
+        });
     },
 
     onCancelClick() {

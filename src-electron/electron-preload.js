@@ -73,7 +73,9 @@ tls.rootCertificates.forEach(rootCaAdd);
 
 try {
   if (sslWinCa.der2) {
-    sslWinCa.exe(pathJoin(process.resourcesPath, 'win-ca', 'roots.exe'));
+    if (process.env.DEV !== true) {
+      sslWinCa.exe(pathJoin(process.resourcesPath, 'win-ca', 'roots.exe'));
+    }
     sslWinCa({
       store: ['AuthRoot', 'CertificateAuthority', 'My', 'Root', 'TrustedPeople', 'TrustedPublisher'],
       format: sslWinCa.der2.pem,

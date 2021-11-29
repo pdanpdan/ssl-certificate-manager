@@ -4,6 +4,7 @@
   "description": "SSL Certificate Manager",
   "productName": "SSL Certificate Manager",
   "author": "Dan Popescu <pdan.popescu@gmail.com>",
+  "license": "CC-BY-NC-ND-4.0",
   "private": true,
   "scripts": {
     "dev": "quasar dev -m electron",

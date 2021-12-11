@@ -17,8 +17,9 @@ For the moment it:
 - keeps a history (and allow inspection) of previous different validation results
 - allows exporting of the domains with the validation details
 
-[Dashboard in dense mode / overview](media/screenshot_overview_dense.png)
-[Dashboard in detailed view](media/screenshot_overview_detailed.png)
+![Dashboard in dense mode / overview](media/screenshot_overview_dense.png)
+
+![Dashboard in detailed view](media/screenshot_overview_detailed.png)
 
 ## Project future
 

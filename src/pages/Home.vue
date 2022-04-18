@@ -205,7 +205,7 @@
 
     <q-scroll-area id="hosts-scroll-area" class="col">
       <q-virtual-scroll
-         :class="{ 'q-mt-lg': filters.viewDetailed !== true }"
+        :class="{ 'q-mt-lg': filters.viewDetailed !== true }"
         :items="filteredHosts"
         scroll-target="#hosts-scroll-area > q-scrollarea__container"
         :virtual-scroll-item-size="filters.viewDetailed ? 400 : 56"
